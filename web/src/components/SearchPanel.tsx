@@ -4,6 +4,7 @@ import { isAccount, useApp } from "../context";
 import { useT } from "../i18n";
 import { errorMessage } from "../lib/errors";
 import { formatReleaseDate } from "../lib/format";
+import { useFitToViewport } from "../lib/useFitToViewport";
 import { GameArt } from "./GameArt";
 import { SourceBadge, SourceSwitch } from "./SourceMark";
 import { Badge, Button, Icon, Notice, Spinner } from "./ui";
@@ -25,6 +26,8 @@ export function SearchPanel() {
   const [forceSteam, setForceSteam] = useState(false);
   const seq = useRef(0);
   const input = useRef<HTMLInputElement>(null);
+  const box = useRef<HTMLElement>(null);
+  const list = useRef<HTMLUListElement>(null);
   const id = useId();
   const q = query.trim();
   const active = q.length >= SEARCH_MIN_CHARS;
@@ -108,9 +111,14 @@ export function SearchPanel() {
   const providerShort = knownProvider ?? t("search.providerShort");
   const shown: Source = forceSteam ? "steam" : loading || !response ? source : response.source;
   const results = forceSteam ? [] : (response?.results ?? []);
+  useFitToViewport(
+    list,
+    box,
+    active && !loading && results.length > 0 ? `${forceSteam}:${response?.source}:${results.length}` : null,
+  );
 
   return (
-    <section aria-labelledby={`${id}-title`} className="rounded-wv border border-border bg-surface p-4 shadow-wv-sm sm:p-6">
+    <section ref={box} aria-labelledby={`${id}-title`} className="rounded-wv border border-border bg-surface p-4 shadow-wv-sm sm:p-6">
       <h2 id={`${id}-title`} className="font-heading text-xl font-bold tracking-tight">
         {t("search.title")}
       </h2>
@@ -188,7 +196,7 @@ export function SearchPanel() {
           )}
 
           {loading ? (
-            <ul aria-hidden="true" className="max-h-[max(10rem,calc(100dvh-22rem))] divide-y divide-border overflow-hidden rounded-wv border border-border">
+            <ul aria-hidden="true" className="divide-y divide-border overflow-hidden rounded-wv border border-border">
               {Array.from({ length: 4 }, (_, i) => (
                 <li key={i} className="flex animate-pulse items-center gap-3 bg-surface p-2.5 sm:gap-4">
                   <div className="aspect-[460/215] w-24 shrink-0 rounded-wv-sm bg-surface-2 sm:w-32" />
@@ -206,8 +214,9 @@ export function SearchPanel() {
             </p>
           ) : (
             <ul
+              ref={list}
               aria-label={t("search.results")}
-              className="max-h-[max(10rem,calc(100dvh-22rem))] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border [scrollbar-gutter:stable]"
+              className="max-h-[70dvh] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border [scrollbar-gutter:stable]"
             >
               {results.map((r) => {
                 const key = `${r.source}:${r.source_id}`;
