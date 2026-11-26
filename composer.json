@@ -24,7 +24,10 @@
         "test": "phpunit",
         "stan": "phpstan analyse --memory-limit=512M",
         "lint": "find src public bin tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null",
-        "serve": "php -S 127.0.0.1:8080 -t public public/index.php"
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "php -S 127.0.0.1:8080 -t public public/index.php"
+        ]
     },
     "config": {
         "sort-packages": true,
