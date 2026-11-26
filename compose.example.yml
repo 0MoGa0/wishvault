@@ -17,6 +17,9 @@ services:
       # IP/CIDR of your reverse proxy, so client IPs and HTTPS are detected
       TRUSTED_PROXIES: 172.16.0.0/12
       TZ: UTC
+      # Optional: delete old wishes automatically (days, 0 = never)
+      # PURGE_AVAILABLE_DAYS: 45
+      # THEME: gamevault
 
 volumes:
   wishvault-data:
