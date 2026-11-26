@@ -27,7 +27,7 @@ final readonly class InfoController
     {
         $lastSync = Database::run(
             ($this->db)(),
-            "SELECT json_extract(value, '$.finished_at') FROM jobs_state WHERE key = 'last_sync'",
+            "SELECT json_extract(value, '$') FROM jobs_state WHERE key = 'last_sync_ok_at'",
         )->fetchColumn();
 
         return Response::json([

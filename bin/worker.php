@@ -5,9 +5,8 @@ declare(strict_types=1);
 /*
  * Background worker, started by s6 inside the container (no cron).
  * Runs forever: heartbeat + sync flag check every 10 s, GameVault sync every
- * SYNC_SECONDS, Steam release check every STEAM_RECHECK_HOURS.
- *
- * Track S fills in the jobs; this skeleton only keeps the heartbeat.
+ * SYNC_SECONDS, Steam release check every STEAM_RECHECK_HOURS, hourly purge,
+ * daily backup. `--once` runs a single tick (smoke tests).
  */
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -15,11 +14,11 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use WishVault\Config;
 use WishVault\Db\Database;
 use WishVault\SystemClock;
+use WishVault\Upstream\CurlHttpClient;
+use WishVault\Worker\Worker;
 
 Config::loadDotEnv(dirname(__DIR__) . '/.env');
 $config = Config::fromEnv();
-$clock = new SystemClock();
-$pdo = Database::open($config->databasePath());
 $args = $_SERVER['argv'] ?? [];
 $once = is_array($args) && in_array('--once', $args, true);
 
@@ -30,21 +29,20 @@ if (function_exists('pcntl_signal')) {
     pcntl_signal(SIGINT, static function () use (&$running): void { $running = false; });
 }
 
+$worker = new Worker(
+    $config,
+    Database::open($config->databasePath()),
+    new CurlHttpClient(),
+    new SystemClock(),
+    static function (int $ms): void { usleep($ms * 1000); },
+    (gethostname() ?: 'worker') . ':' . getmypid() . ':' . bin2hex(random_bytes(4)),
+);
+
 fwrite(STDOUT, "wishvault worker started\n");
-do {
-    $now = SystemClock::format($clock->now());
-    $pdo->prepare(
-        "INSERT INTO jobs_state (key, value, updated_at) VALUES ('worker_seen', :v, :t)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
-    )->execute(['v' => json_encode($now), 't' => $now]);
-
-    // TODO(track S): lock, sync flag, GameVault sync, release check, cache purge, backup.
-
-    if ($once) {
-        break;
-    }
-    for ($i = 0; $i < 10 && $running; $i++) {
-        sleep(1);
-    }
-} while ($running);
+if ($once) {
+    $worker->tick();
+    $worker->releaseLock();
+} else {
+    $worker->run(static function () use (&$running): bool { return !$running; });
+}
 fwrite(STDOUT, "wishvault worker stopped\n");

@@ -30,10 +30,21 @@ final class InfoTest extends TestCase
         self::assertSame(['code' => 'not_found', 'message' => 'Not found'], self::body($res)['error']);
     }
 
-    public function testPlannedRouteIs501(): void
+    public function testLastSyncAtComesFromTheLastSuccessfulSync(): void
     {
-        $res = self::call(new App(self::config(), self::memoryDb()), 'PUT', '/api/v1/wishes/5/vote');
-        self::assertSame(501, $res->status);
+        $pdo = self::memoryDb();
+        $pdo->exec("INSERT INTO jobs_state (key, value, updated_at) VALUES ('last_sync_ok_at', '\"2026-06-01T10:00:00Z\"', 'x')");
+        $body = self::body(self::call(new App(self::config(), $pdo), 'GET', '/api/v1/info'));
+        self::assertSame('2026-06-01T10:00:00Z', $body['last_sync_at']);
+    }
+
+    public function testInternalErrorsDoNotLeakDetails(): void
+    {
+        $pdo = self::memoryDb();
+        $pdo->exec('DROP TABLE votes');
+        $res = self::call(new App(self::config(), $pdo), 'GET', '/api/v1/wishes');
+        self::assertSame(500, $res->status);
+        self::assertSame(['code' => 'internal_error', 'message' => 'Internal error'], self::body($res)['error']);
     }
 
     public function testWrongMethodIs405(): void
