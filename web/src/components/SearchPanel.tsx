@@ -216,7 +216,7 @@ export function SearchPanel() {
             <ul
               ref={list}
               aria-label={t("search.results")}
-              className="max-h-[70dvh] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border [scrollbar-gutter:stable]"
+              className="max-h-[70dvh] divide-y divide-border overflow-y-auto rounded-wv border border-border [scrollbar-gutter:stable]"
             >
               {results.map((r) => {
                 const key = `${r.source}:${r.source_id}`;
