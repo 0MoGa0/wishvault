@@ -15,6 +15,7 @@ final class ConfigTest extends TestCase
         self::assertSame(1, $c->wishMinRole);
         self::assertSame(3, $c->adminMinRole);
         self::assertSame(900, $c->syncSeconds);
+        self::assertSame([0, 0, 0, 0], [$c->purgeAvailableDays, $c->purgeRejectedDays, $c->purgeOpenDays, $c->purgeQueuedDays]);
         self::assertTrue($c->anonEnabled);
         self::assertSame('default', $c->theme);
         self::assertNull($c->clientDownloadUrl);
@@ -29,6 +30,8 @@ final class ConfigTest extends TestCase
             'GAMEVAULT_PASSWORD' => 'secret',
             'ADMIN_MIN_ROLE' => '9',
             'SYNC_SECONDS' => '5',
+            'PURGE_AVAILABLE_DAYS' => '90',
+            'PURGE_REJECTED_DAYS' => '-4',
             'ANON_ENABLED' => 'off',
             'THEME' => '../evil',
             'TRUSTED_PROXIES' => '10.0.0.1, 172.16.0.0/12,',
@@ -37,6 +40,7 @@ final class ConfigTest extends TestCase
         self::assertSame('https://gv.example.com', $c->gamevaultPublicUrl);
         self::assertSame(3, $c->adminMinRole);
         self::assertSame(60, $c->syncSeconds);
+        self::assertSame([90, 0], [$c->purgeAvailableDays, $c->purgeRejectedDays]);
         self::assertFalse($c->anonEnabled);
         self::assertSame('default', $c->theme);
         self::assertSame(['10.0.0.1', '172.16.0.0/12'], $c->trustedProxies);

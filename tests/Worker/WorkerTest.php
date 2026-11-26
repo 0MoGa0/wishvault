@@ -105,6 +105,44 @@ final class WorkerTest extends TestCase
         return Database::run($this->pdo, "SELECT $field FROM wishes WHERE id = :id", ['id' => $id])->fetchColumn();
     }
 
+    public function testPurgeWishesByAge(): void
+    {
+        // now: 2026-06-01T12:00:00Z
+        $oldAvailable = $this->addWish('steam', '1', 'Old Available', 'available');
+        $newAvailable = $this->addWish('steam', '2', 'New Available', 'available');
+        $oldRejected = $this->addWish('steam', '3', 'Old Rejected', 'rejected');
+        $quietOpen = $this->addWish('steam', '4', 'Quiet Open', 'paused');
+        $votedOpen = $this->addWish('steam', '5', 'Recently Voted', 'new');
+        $quietQueued = $this->addWish('steam', '6', 'Quiet Queued', 'queued');
+        $set = fn (int $id, string $sql) => Database::run($this->pdo, "UPDATE wishes SET $sql WHERE id = :id", ['id' => $id]);
+        $set($oldAvailable, "available_at = '2026-02-01T00:00:00Z'");
+        $set($newAvailable, "available_at = '2026-05-20T00:00:00Z'");
+        $set($oldRejected, "status_changed_at = '2026-01-01T00:00:00Z'");
+        Database::run($this->pdo, "UPDATE votes SET created_at = '2025-01-01T00:00:00Z'");
+        Database::run($this->pdo, "UPDATE wishes SET created_at = '2025-01-01T00:00:00Z' WHERE id IN ($quietOpen, $votedOpen, $quietQueued)");
+        Database::run($this->pdo, "UPDATE votes SET created_at = '2026-05-30T00:00:00Z' WHERE wish_id = $votedOpen");
+        Database::run($this->pdo, "INSERT INTO events (user_id, type, wish_id, wish_title, created_at) VALUES (11, 'available', $oldAvailable, 'Old Available', 'x')");
+
+        $ids = fn (): array => array_map('intval', Database::run($this->pdo, 'SELECT id FROM wishes ORDER BY id')->fetchAll(\PDO::FETCH_COLUMN));
+        $all = [$oldAvailable, $newAvailable, $oldRejected, $quietOpen, $votedOpen, $quietQueued];
+
+        // default: everything off
+        self::assertSame(0, $this->worker()->purgeWishes());
+        self::assertSame($all, $ids());
+
+        self::assertSame(1, $this->worker(['PURGE_AVAILABLE_DAYS' => '90'])->purgeWishes());
+        self::assertNotContains($oldAvailable, $ids());
+        self::assertSame(0, (int) Database::run($this->pdo, 'SELECT COUNT(*) FROM events')->fetchColumn());
+        self::assertSame(0, (int) Database::run($this->pdo, "SELECT COUNT(*) FROM votes WHERE wish_id = $oldAvailable")->fetchColumn());
+
+        self::assertSame(1, $this->worker(['PURGE_REJECTED_DAYS' => '90'])->purgeWishes());
+        self::assertSame(1, $this->worker(['PURGE_OPEN_DAYS' => '365'])->purgeWishes());
+        self::assertSame([$newAvailable, $votedOpen, $quietQueued], $ids());
+        self::assertSame(1, $this->worker(['PURGE_QUEUED_DAYS' => '365'])->purgeWishes());
+        self::assertSame([$newAvailable, $votedOpen], $ids());
+        self::assertSame(['purged 1 old wishes', 'purged 1 old wishes', 'purged 1 old wishes', 'purged 1 old wishes'], $this->logs);
+    }
+
     public function testParseGameCollectsAllIds(): void
     {
         $game = LibrarySync::parseGame([

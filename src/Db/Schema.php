@@ -68,6 +68,7 @@ final class Schema
                 created_at              TEXT    NOT NULL,
                 updated_at              TEXT    NOT NULL,
                 available_at            TEXT,
+                status_changed_at       TEXT,                         -- last status change (NULL: created_at)
                 details_checked_at      TEXT,                         -- last Steam release re-check
                 UNIQUE (source, source_id)
             );

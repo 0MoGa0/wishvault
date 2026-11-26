@@ -209,7 +209,47 @@ final class Worker
             'DELETE FROM voters WHERE last_seen_at < :cutoff AND NOT EXISTS (SELECT 1 FROM votes WHERE voter_id = voters.id)',
             ['cutoff' => SystemClock::format($this->clock->now()->modify('-90 days'))],
         );
+        $this->purgeWishes();
         $this->state->set('last_purge', $now);
+    }
+
+    /**
+     * Deletes old wishes by the PURGE_*_DAYS rules (0 = off), with their votes
+     * and events:
+     * - available: days since the wish became available
+     * - rejected: days since the last status change
+     * - open (new, paused) and queued: days since the last activity
+     *   (newest vote, status change or creation)
+     *
+     * @return int deleted wishes
+     */
+    public function purgeWishes(): int
+    {
+        $activity = "MAX(w.created_at, COALESCE(w.status_changed_at, ''), COALESCE((SELECT MAX(v.created_at) FROM votes v WHERE v.wish_id = w.id), ''))";
+        $rules = [
+            [$this->config->purgeAvailableDays, "w.status = 'available' AND COALESCE(w.available_at, w.status_changed_at, w.updated_at)"],
+            [$this->config->purgeRejectedDays, "w.status = 'rejected' AND COALESCE(w.status_changed_at, w.updated_at)"],
+            [$this->config->purgeOpenDays, "w.status IN ('new', 'paused') AND $activity"],
+            [$this->config->purgeQueuedDays, "w.status = 'queued' AND $activity"],
+        ];
+        $deleted = 0;
+        foreach ($rules as [$days, $condition]) {
+            if ($days <= 0) {
+                continue;
+            }
+            $cutoff = SystemClock::format($this->clock->now()->modify("-$days days"));
+            $ids = Database::run($this->pdo, "SELECT w.id FROM wishes w WHERE $condition < :cutoff", ['cutoff' => $cutoff])
+                ->fetchAll(\PDO::FETCH_COLUMN);
+            foreach ($ids as $id) {
+                Database::run($this->pdo, 'DELETE FROM events WHERE wish_id = :id', ['id' => $id]);
+                Database::run($this->pdo, 'DELETE FROM wishes WHERE id = :id', ['id' => $id]);
+                $deleted++;
+            }
+        }
+        if ($deleted > 0) {
+            $this->log("purged $deleted old wishes");
+        }
+        return $deleted;
     }
 
     public function backup(): void

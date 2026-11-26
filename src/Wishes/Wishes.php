@@ -237,6 +237,7 @@ final readonly class Wishes
         $newStatus = $changes['status'] ?? $oldStatus;
         if ($newStatus !== $oldStatus) {
             $set[] = 'status = :status';
+            $set[] = 'status_changed_at = :now';
             $params['status'] = $newStatus;
             if ($newStatus === 'available') {
                 $set[] = 'available_at = :now';

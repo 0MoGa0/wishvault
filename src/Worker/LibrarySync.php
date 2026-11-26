@@ -240,7 +240,7 @@ final readonly class LibrarySync
             if (Data::str($row, 'status') !== 'available' && $this->config->autoAvailable) {
                 $changed = Database::run(
                     $this->pdo,
-                    "UPDATE wishes SET status = 'available', gv_game_id = :g, available_at = :now, updated_at = :now
+                    "UPDATE wishes SET status = 'available', gv_game_id = :g, available_at = :now, status_changed_at = :now, updated_at = :now
                      WHERE id = :id AND status IN ('new', 'queued', 'paused')",
                     ['g' => $gameId, 'now' => $now, 'id' => $id],
                 )->rowCount();
