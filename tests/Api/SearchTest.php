@@ -120,6 +120,25 @@ final class SearchTest extends TestCase
         self::assertSame([], $body['results']);
     }
 
+    public function testFallbackKeepsEmptySteamResultWhenProviderFails(): void
+    {
+        // bot without the editor role: GameVault answers 403
+        $this->http->json('#storesearch/\?term=locked&#', ['total' => 0, 'items' => []]);
+        $this->http->json('#/providers/igdb/search\?query=locked#', ['statusCode' => 403], 403);
+
+        $res = self::send($this->app(self::BOT), 'GET', '/api/v1/search?q=locked');
+        self::assertSame(200, $res->status, $res->body);
+        $body = self::body($res);
+        self::assertSame('steam', $body['source']);
+        self::assertFalse($body['fallback']);
+        self::assertSame([], $body['results']);
+
+        // the explicit provider search still reports the problem
+        $res = self::send($this->app(self::BOT), 'GET', '/api/v1/search?q=locked&source=provider');
+        self::assertSame(502, $res->status);
+        self::assertSame('provider_unavailable', self::errorCode($res));
+    }
+
     public function testDirectProviderSearchMarksLibraryGames(): void
     {
         $this->http->json('#/providers/igdb/search\?query=portal#', [

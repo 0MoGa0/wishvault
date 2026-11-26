@@ -167,7 +167,8 @@ paths:
       description: |
         `source=steam` (default) searches the Steam store. If Steam has no
         results, the service falls back to the highest-priority metadata
-        provider of the GameVault server and sets `fallback: true`.
+        provider of the GameVault server and sets `fallback: true`. If that
+        automatic fallback fails, the empty Steam result is returned (200).
         `source=provider` searches the provider directly ("not listed? search
         IGDB"). Returns at most 10 results.
       parameters:

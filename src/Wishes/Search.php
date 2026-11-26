@@ -76,7 +76,16 @@ final readonly class Search
         }
 
         if ($items === [] && $appId === null && $this->config->providerSearchEnabled()) {
-            return $this->provider($caller, $query, true);
+            try {
+                return $this->provider($caller, $query, true);
+            } catch (ApiError $e) {
+                // The automatic fallback is best effort: an unreachable or
+                // unauthorized provider must not turn an empty Steam result
+                // into an error. An explicit source=provider search reports it.
+                if ($e->status !== 502) {
+                    throw $e;
+                }
+            }
         }
 
         $results = [];
