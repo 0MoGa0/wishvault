@@ -222,7 +222,7 @@ export function SearchPanel() {
                 const key = `${r.source}:${r.source_id}`;
                 const release = formatReleaseDate(r.release_date);
                 return (
-                  <li key={key} className="flex items-center gap-3 bg-surface py-2.5 pr-3 pl-2.5 transition-colors hover:bg-surface-2 sm:gap-4">
+                  <li key={key} className="flex items-center gap-3 bg-surface py-2.5 pr-6 pl-2.5 transition-colors hover:bg-surface-2 sm:gap-4">
                     <div className="relative shrink-0">
                       <GameArt src={r.image_url} title={r.title} className="aspect-[460/215] w-24 rounded-wv-sm sm:w-32" />
                       <SourceBadge source={r.source} providerName={providerShort} className="absolute right-1 bottom-1" />
