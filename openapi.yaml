@@ -25,7 +25,19 @@ info:
     Every non-GET request authenticated by a cookie must send the header
     `X-Requested-With: WishVault` and, if present, a same-origin `Origin`.
     Otherwise the request fails with `403 csrf_failed`. Bearer requests are
-    exempt. CORS is enabled for Bearer requests only, without credentials.
+    exempt.
+
+    ## CORS
+    Native clients (e.g. desktop apps with a web view) call the API from a
+    foreign origin. Every `/api/v1` response, **including error responses**,
+    carries `Access-Control-Allow-Origin: *` and
+    `Access-Control-Expose-Headers: Retry-After`, never
+    `Access-Control-Allow-Credentials`. Cookies are therefore never usable
+    cross-origin; foreign origins authenticate with Bearer only.
+    `OPTIONS` on any `/api/v1` path answers `204` with
+    `Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE`,
+    `Access-Control-Allow-Headers: Authorization, Content-Type, X-Requested-With`
+    and `Access-Control-Max-Age: 86400`.
 
     ## Roles
     GameVault roles: `0` guest, `1` user, `2` editor, `3` admin.
