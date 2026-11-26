@@ -32,7 +32,7 @@ describe("App", () => {
     expect(screen.getByText("root")).toBeTruthy();
     expect(screen.getByText("Service status")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Download/ }).getAttribute("href")).toBe("https://example.com/client");
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Open", "Available", "Rejected", "All"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Open", "Available", "My votes", "Rejected", "All"]);
     expect(screen.getByRole("button", { name: "Load more" })).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/wishes?filter=open&sort=votes&limit=24&offset=0", expect.anything());
   });
@@ -45,7 +45,7 @@ describe("App", () => {
     );
     render(<App info={info} />);
     expect(await screen.findByText("This function is not available on this server yet.")).toBeTruthy();
-    expect(screen.getAllByRole("tab")).toHaveLength(2);
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy();
   });
 });

@@ -4,20 +4,17 @@
   "app.unavailableHint": "Please try again in a moment. If this keeps happening, tell the person who runs this site.",
   "app.skip": "Skip to content",
   "nav.wishlist": "Wishlist",
-
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.save": "Save",
   "common.retry": "Try again",
   "common.refresh": "Refresh",
-
   "header.language": "Language",
   "role.0": "Guest",
   "role.1": "User",
   "role.2": "Editor",
   "role.3": "Admin",
   "role.admin_badge": "Admin",
-
   "auth.login": "Log in",
   "auth.logout": "Log out",
   "auth.title": "Log in with GameVault",
@@ -28,12 +25,10 @@
   "auth.loggedIn": "Welcome, {name}!",
   "auth.loggedOut": "You are logged out.",
   "auth.moved": "Logged in. Moved from this browser to your account: {votes} vote(s), {wishes} wish(es).",
-
   "client.title": "Get the desktop client",
   "client.text": "Play the games from this server, follow your wishes and get notified when they become available.",
   "client.download": "Download",
   "client.hide": "Hide",
-
   "search.title": "Wish for a game",
   "search.subtitle": "Search the Steam store by name, AppID or store link.",
   "search.label": "Search games",
@@ -44,8 +39,6 @@
   "search.noResults": "No games found.",
   "search.fallback": "Not found on Steam – results from {provider}.",
   "search.providerResults": "Results from {provider}.",
-  "search.tryProvider": "Not listed? Search {provider}",
-  "search.backToSteam": "Back to Steam results",
   "search.providerGeneric": "the metadata provider",
   "search.inGameVault": "Already in GameVault",
   "search.alreadyWished": "Already wished",
@@ -56,7 +49,6 @@
   "search.loginToWish": "Log in to wish for games and vote.",
   "search.wishingDisabled": "Wishing and voting are not enabled for guests on this site.",
   "search.roleTooLow": "Your GameVault role does not allow wishing or voting here.",
-
   "list.sort": "Sort",
   "list.sortVotes": "Most votes",
   "list.sortNew": "Newest",
@@ -72,7 +64,6 @@
   "list.emptyHint": "Search a game above to make the first wish.",
   "list.loadMore": "Load more",
   "list.shown": "{shown} of {total}",
-
   "status.new": "New",
   "status.queued": "Queued",
   "status.paused": "Paused",
@@ -85,7 +76,6 @@
   "status.available.help": "The game is in GameVault. Voting closes and voters are notified.",
   "availability.available": "Available",
   "availability.not_available": "Not available yet",
-
   "wish.vote": "vote",
   "wish.votes": "votes",
   "wish.voteAction": "Vote",
@@ -99,13 +89,11 @@
   "wish.comingSoon": "Coming {date}",
   "wish.comingSoonNoDate": "Coming soon",
   "wish.sourceSteam": "Steam store",
-  "wish.sourceProvider": "Source",
   "wish.categories": "Categories",
   "wish.reason": "Reason",
   "wish.note": "Note",
   "wish.wishedBy": "Wished by {names}",
   "wish.removedLastVote": "Your vote was the last one, the wish \"{title}\" was removed.",
-
   "admin.edit": "Edit",
   "admin.editTitle": "Edit \"{title}\"",
   "admin.status": "Status",
@@ -134,7 +122,6 @@
   "admin.countVotes": "Votes",
   "admin.countAnonymous": "Anonymous voters",
   "admin.countUsers": "Accounts",
-
   "tags.title": "Steam tags – {title}",
   "tags.hint": "Click a tag to copy it.",
   "tags.copyOne": "Copy tag {tag}",
@@ -142,16 +129,13 @@
   "tags.copied": "Copied",
   "tags.copyFailed": "Copying failed. Your browser blocked the clipboard.",
   "tags.empty": "No Steam tags for this game.",
-
   "footer.synced": "Library synced",
   "footer.notSynced": "Library not synced yet.",
   "footer.poweredBy": "WishVault {version}",
   "footer.source": "Source code",
-
   "time.seconds": "{count} s",
   "time.minutes": "{count} min",
   "time.hours": "{count} h",
-
   "error.unauthorized": "Your session has expired. Please log in again.",
   "error.forbidden": "You are not allowed to do this.",
   "error.role_too_low": "Your GameVault role is not high enough for this.",
@@ -171,5 +155,15 @@
   "error.not_implemented": "This function is not available on this server yet.",
   "error.internal_error": "Something went wrong. Please try again.",
   "error.network": "No connection to the server.",
-  "error.retry_after": "Try again in {time}."
+  "error.retry_after": "Try again in {time}.",
+  "common.undo": "Undo",
+  "wish.restored": "Restored: {title}",
+  "wish.providerShort": "Provider",
+  "search.clear": "Clear search",
+  "search.searching": "Searching…",
+  "search.noResultsSteam": "No games found on Steam.",
+  "search.providerShort": "Provider",
+  "search.sourceLabel": "Search in",
+  "list.tab.voted": "My votes",
+  "list.empty.voted": "You have not voted for any wish yet."
 }

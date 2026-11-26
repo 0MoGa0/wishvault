@@ -69,15 +69,25 @@ describe("WishCard", () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ votes: 4 }));
     rerender(<div />);
 
-    renderWithApp(<WishCard wish={wish({ voted: true, status: "new" })} onChange={onChange} onRemove={onRemove} />, {
-      me: user,
-    });
+    const { state } = renderWithApp(
+      <WishCard wish={wish({ voted: true, status: "new" })} onChange={onChange} onRemove={onRemove} />,
+      { me: user },
+    );
     fetchMock.mockResolvedValueOnce(jsonResponse({ wish: null, deleted: true }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Voted: Portal 2" }));
     });
     expect(fetchMock.mock.calls[1]![1]?.method).toBe("DELETE");
     expect(onRemove).toHaveBeenCalledWith(7);
+
+    // the toast offers to undo: the wish is created again
+    const toastCall = vi.mocked(state.toast).mock.calls[0]!;
+    expect(toastCall[2]?.label).toBe("Undo");
+    fetchMock.mockResolvedValueOnce(jsonResponse({ created: true, wish: wish({ voted: true }) }, 201));
+    await act(async () => toastCall[2]!.onClick());
+    expect(fetchMock.mock.calls[2]![0]).toBe("/api/v1/wishes");
+    expect(fetchMock.mock.calls[2]![1]?.body).toBe('{"source":"steam","source_id":"620"}');
+    expect(state.reloadWishes).toHaveBeenCalled();
   });
 
   it("has no vote button on closed wishes", () => {

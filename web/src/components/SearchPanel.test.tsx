@@ -101,7 +101,7 @@ describe("SearchPanel", () => {
     expect(await screen.findByText("Not found on Steam – results from IGDB.")).toBeTruthy();
     expect(screen.getByText("Already in GameVault")).toBeTruthy();
     expect(screen.getByText("Wished – you voted")).toBeTruthy();
-    expect(screen.queryByText(/Not listed\?/)).toBeNull();
+    expect(screen.getByRole("radio", { name: "IGDB" }).getAttribute("aria-checked")).toBe("true");
 
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ created: true, wish: { id: 9, title: "New Game" } }, 201),
@@ -113,7 +113,41 @@ describe("SearchPanel", () => {
     expect(init?.body).toBe('{"source":"provider","source_id":"3"}');
     expect(state.toast).toHaveBeenCalledWith("Wished: New Game", "success");
     expect(state.reloadWishes).toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: "Wish: New Game" })).toBeNull();
+    // the search is cleared after wishing
+    expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByText("New Game")).toBeNull();
+  });
+
+  it("switches back to the empty Steam result after a fallback without a new request", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        response([result({ source: "provider", source_id: "3", title: "Obscure" })], {
+          source: "provider",
+          fallback: true,
+          provider: { slug: "igdb", name: "IGDB" },
+        }),
+      ),
+    );
+    renderWithApp(<SearchPanel />);
+    await type("obscure");
+    await settle();
+    expect(await screen.findByText("Obscure")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "Steam" }));
+    expect(screen.getByText("No games found on Steam.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "IGDB" }));
+    expect(screen.getByText("Obscure")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the search with the clear button", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(response([result()])));
+    renderWithApp(<SearchPanel />);
+    await type("portal");
+    await settle();
+    expect(await screen.findByText("Portal 2")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+    expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByText("Portal 2")).toBeNull();
   });
 
   it("offers the provider search", async () => {
@@ -125,10 +159,20 @@ describe("SearchPanel", () => {
     renderWithApp(<SearchPanel />);
     await type("portal");
     await settle();
-    fireEvent.click(await screen.findByRole("button", { name: "Not listed? Search the metadata provider" }));
+    expect(await screen.findByText("Portal 2")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "Provider" }));
+    // skeleton while the provider loads
+    expect(screen.getByText("Searching…")).toBeTruthy();
     await settle();
     expect(fetchMock.mock.calls[1]![0]).toBe("/api/v1/search?q=portal&source=provider");
     expect(await screen.findByText("Results from IGDB.")).toBeTruthy();
+
+    // and back to Steam
+    fetchMock.mockResolvedValueOnce(jsonResponse(response([result()])));
+    fireEvent.click(screen.getByRole("radio", { name: "Steam" }));
+    await settle();
+    expect(fetchMock.mock.calls[2]![0]).toBe("/api/v1/search?q=portal&source=steam");
+    expect(await screen.findByText("Portal 2")).toBeTruthy();
   });
 
   it("hides the provider button when the feature is off and blocks guests without rights", async () => {
@@ -141,7 +185,7 @@ describe("SearchPanel", () => {
     await type("portal");
     await settle();
     expect(await screen.findByText("Portal 2")).toBeTruthy();
-    expect(screen.queryByText(/Not listed\?/)).toBeNull();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
     expect((screen.getByRole("button", { name: "Wish: Portal 2" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

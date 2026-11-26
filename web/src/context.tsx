@@ -3,11 +3,17 @@ import type { Info, Me } from "./api/client";
 
 export type ToastKind = "info" | "success" | "error";
 
+/** Optional button in a toast (e.g. "Undo"). */
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface AppState {
   info: Info;
   me: Me;
   setMe: (me: Me) => void;
-  toast: (message: string, kind?: ToastKind) => void;
+  toast: (message: string, kind?: ToastKind, action?: ToastAction) => void;
   /** Ask the wish list to reload (after a new wish, login, logout …). */
   reloadWishes: () => void;
   wishesVersion: number;

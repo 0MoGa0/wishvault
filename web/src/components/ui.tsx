@@ -8,10 +8,10 @@ export function cx(...parts: (string | false | null | undefined)[]): string {
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-accent-text hover:bg-accent/90 shadow-wv-sm",
-  secondary: "bg-surface-2 text-text hover:bg-border/70 border border-border",
-  ghost: "text-text hover:bg-surface-2",
-  danger: "bg-danger text-accent-text hover:bg-danger/90",
+  primary: "bg-accent text-accent-text shadow-wv-sm hover:bg-accent/80 hover:shadow-wv",
+  secondary: "bg-surface-2 text-text border border-border hover:bg-border hover:border-muted/40",
+  ghost: "text-text hover:bg-border/70",
+  danger: "bg-danger text-accent-text hover:bg-danger/80 hover:shadow-wv",
 };
 
 export function Button({

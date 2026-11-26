@@ -18,7 +18,7 @@ export type AdminStatus = Schemas["AdminStatus"];
 export type ErrorCode = Schemas["ErrorCode"];
 export type ApiErrorBody = Schemas["Error"];
 
-export type WishFilter = "open" | "available" | "rejected" | "all";
+export type WishFilter = "open" | "available" | "voted" | "rejected" | "all";
 export type WishSort = "votes" | "new";
 
 export const STATUSES = ["new", "queued", "paused", "rejected", "available"] as const satisfies readonly Status[];

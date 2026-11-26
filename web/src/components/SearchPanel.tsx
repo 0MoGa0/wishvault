@@ -5,6 +5,7 @@ import { useT } from "../i18n";
 import { errorMessage } from "../lib/errors";
 import { formatReleaseDate } from "../lib/format";
 import { GameArt } from "./GameArt";
+import { SourceBadge, SourceSwitch } from "./SourceMark";
 import { Badge, Button, Icon, Notice, Spinner } from "./ui";
 
 export const SEARCH_DEBOUNCE_MS = 350;
@@ -20,7 +21,10 @@ export function SearchPanel() {
   const [error, setError] = useState<string | null>(null);
   const [providerName, setProviderName] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
+  // After an automatic fallback, "Steam" shows the (empty) Steam result without a new request.
+  const [forceSteam, setForceSteam] = useState(false);
   const seq = useRef(0);
+  const input = useRef<HTMLInputElement>(null);
   const id = useId();
   const q = query.trim();
   const active = q.length >= SEARCH_MIN_CHARS;
@@ -35,6 +39,7 @@ export function SearchPanel() {
       return;
     }
     setLoading(true);
+    setForceSteam(false);
     const timer = setTimeout(() => {
       endpoints.search(q, source).then(
         (res) => {
@@ -72,6 +77,7 @@ export function SearchPanel() {
       updateResult(r, { wish_id: res.wish.id, voted: true });
       toast(t(res.created ? "search.wished" : "search.votedToast", { title: res.wish.title }), "success");
       reloadWishes();
+      clear();
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -79,8 +85,27 @@ export function SearchPanel() {
     }
   }
 
+  function clear() {
+    setQuery("");
+    setSource("steam");
+    input.current?.focus();
+  }
+
+  function switchSource(next: Source) {
+    if (next === "steam") {
+      if (response?.fallback) setForceSteam(true);
+      else setSource("steam");
+    } else if (response?.fallback) {
+      setForceSteam(false);
+    } else {
+      setSource("provider");
+    }
+  }
+
   const provider = response?.provider?.name ?? providerName ?? t("search.providerGeneric");
-  const results = response?.results ?? [];
+  const providerShort = response?.provider?.name ?? providerName ?? t("search.providerShort");
+  const shown: Source = forceSteam ? "steam" : loading || !response ? source : response.source;
+  const results = forceSteam ? [] : (response?.results ?? []);
 
   return (
     <section aria-labelledby={`${id}-title`} className="rounded-wv border border-border bg-surface p-4 shadow-wv-sm sm:p-6">
@@ -101,6 +126,7 @@ export function SearchPanel() {
         </label>
         <Icon name="search" className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted" />
         <input
+          ref={input}
           id={`${id}-q`}
           type="search"
           value={query}
@@ -113,16 +139,29 @@ export function SearchPanel() {
             setSource("steam");
           }}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setQuery("");
+            if (e.key === "Escape") clear();
           }}
           aria-describedby={`${id}-status`}
-          className="h-12 w-full rounded-wv border border-border bg-bg pr-10 pl-11 text-base text-text placeholder:text-muted/80"
+          className="h-12 w-full rounded-wv border border-border bg-bg pr-24 pl-11 text-base text-text placeholder:text-muted/80"
         />
-        {loading && (
-          <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-muted">
-            <Spinner small />
-          </span>
-        )}
+        <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2">
+          {loading && (
+            <span className="text-muted">
+              <Spinner small />
+            </span>
+          )}
+          {query !== "" && (
+            <button
+              type="button"
+              onClick={clear}
+              aria-label={t("search.clear")}
+              title={t("search.clear")}
+              className="grid size-8 place-items-center rounded-full bg-surface-2 text-text transition-colors hover:bg-danger hover:text-accent-text"
+            >
+              <Icon name="close" className="size-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <p id={`${id}-status`} aria-live="polite" className="mt-2 min-h-5 text-xs text-muted">
@@ -130,32 +169,62 @@ export function SearchPanel() {
           ? t("search.minChars", { count: SEARCH_MIN_CHARS })
           : response && !loading
             ? t("search.resultCount", { count: results.length })
+            : loading
+              ? t("search.searching")
             : ""}
       </p>
 
-      {active && error && <Notice tone="danger">{error}</Notice>}
+      {active && error && !loading && <Notice tone="danger">{error}</Notice>}
 
-      {active && response && (
+      {active && (loading || response || error) && (
         <div className="flex flex-col gap-3">
-          {response.fallback && <Notice tone="accent">{t("search.fallback", { provider })}</Notice>}
-          {!response.fallback && response.source === "provider" && (
+          {!loading && response && !forceSteam && response.fallback && (
+            <Notice tone="accent">{t("search.fallback", { provider })}</Notice>
+          )}
+          {!loading && response && !forceSteam && !response.fallback && response.source === "provider" && (
             <Notice tone="accent">{t("search.providerResults", { provider })}</Notice>
           )}
 
-          {results.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted">{t("search.noResults")}</p>
+          {loading ? (
+            <ul aria-hidden="true" className="max-h-[70dvh] divide-y divide-border overflow-hidden rounded-wv border border-border">
+              {Array.from({ length: 4 }, (_, i) => (
+                <li key={i} className="flex animate-pulse items-center gap-3 bg-surface p-2.5 sm:gap-4">
+                  <div className="aspect-[460/215] w-24 shrink-0 rounded-wv-sm bg-surface-2 sm:w-32" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="h-4 w-2/3 rounded bg-surface-2" />
+                    <div className="h-3 w-1/3 rounded bg-surface-2" />
+                  </div>
+                  <div className="h-8 w-20 rounded-wv-sm bg-surface-2" />
+                </li>
+              ))}
+            </ul>
+          ) : !response ? null : results.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted">
+              {shown === "steam" ? t("search.noResultsSteam") : t("search.noResults")}
+            </p>
           ) : (
-            <ul aria-label={t("search.results")} className="divide-y divide-border overflow-hidden rounded-wv border border-border">
+            <ul
+              aria-label={t("search.results")}
+              className="max-h-[70dvh] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border"
+            >
               {results.map((r) => {
                 const key = `${r.source}:${r.source_id}`;
                 const release = formatReleaseDate(r.release_date);
                 return (
-                  <li key={key} className="flex items-center gap-3 bg-surface p-2.5 sm:gap-4">
-                    <GameArt src={r.image_url} title={r.title} className="aspect-[460/215] w-24 shrink-0 rounded-wv-sm sm:w-32" />
+                  <li key={key} className="flex items-center gap-3 bg-surface p-2.5 transition-colors hover:bg-surface-2 sm:gap-4">
+                    <div className="relative shrink-0">
+                      <GameArt src={r.image_url} title={r.title} className="aspect-[460/215] w-24 rounded-wv-sm sm:w-32" />
+                      <SourceBadge source={r.source} providerName={providerShort} className="absolute right-1 bottom-1" />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">
                         {r.store_url ? (
-                          <a href={r.store_url} target="_blank" rel="noopener noreferrer" className="hover:text-accent hover:underline">
+                          <a
+                            href={r.store_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline-offset-2 hover:text-accent hover:underline"
+                          >
                             {r.title}
                           </a>
                         ) : (
@@ -196,18 +265,18 @@ export function SearchPanel() {
             </ul>
           )}
 
-          <div className="flex flex-wrap justify-end gap-2">
-            {info.features.provider_search && response.source === "steam" && !response.fallback && (
-              <Button size="sm" variant="ghost" onClick={() => setSource("provider")}>
-                {t("search.tryProvider", { provider })}
-              </Button>
-            )}
-            {response.source === "provider" && !response.fallback && (
-              <Button size="sm" variant="ghost" onClick={() => setSource("steam")}>
-                {t("search.backToSteam")}
-              </Button>
-            )}
-          </div>
+          {info.features.provider_search && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="text-xs text-muted">{t("search.sourceLabel")}</span>
+              <SourceSwitch
+                value={shown}
+                providerName={providerShort}
+                label={t("search.sourceLabel")}
+                disabled={loading}
+                onChange={switchSource}
+              />
+            </div>
+          )}
         </div>
       )}
     </section>

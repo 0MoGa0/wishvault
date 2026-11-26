@@ -1,11 +1,12 @@
 import { useT } from "../i18n";
-import type { ToastKind } from "../context";
+import type { ToastAction, ToastKind } from "../context";
 import { cx, Icon } from "./ui";
 
 export interface ToastItem {
   id: number;
   message: string;
   kind: ToastKind;
+  action?: ToastAction;
 }
 
 const kinds: Record<ToastKind, string> = {
@@ -39,11 +40,23 @@ export function Toasts({ items, onDismiss }: { items: ToastItem[]; onDismiss: (i
             )}
           />
           <p className="flex-1">{item.message}</p>
+          {item.action && (
+            <button
+              type="button"
+              onClick={() => {
+                item.action?.onClick();
+                onDismiss(item.id);
+              }}
+              className="-my-1 shrink-0 rounded-wv-sm px-2 py-1 font-semibold text-accent hover:bg-accent/15"
+            >
+              {item.action.label}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onDismiss(item.id)}
             aria-label={t("common.close")}
-            className="-mr-1 grid size-6 place-items-center rounded-wv-sm text-muted hover:text-text"
+            className="-mr-1 grid size-6 place-items-center rounded-wv-sm text-muted hover:bg-surface-2 hover:text-text"
           >
             <Icon name="close" className="size-3.5" />
           </button>

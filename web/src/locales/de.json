@@ -4,20 +4,17 @@
   "app.unavailableHint": "Bitte versuche es gleich noch einmal. Bleibt der Fehler, sag der Person Bescheid, die diese Seite betreibt.",
   "app.skip": "Zum Inhalt springen",
   "nav.wishlist": "Wunschliste",
-
   "common.cancel": "Abbrechen",
   "common.close": "Schließen",
   "common.save": "Speichern",
   "common.retry": "Erneut versuchen",
   "common.refresh": "Aktualisieren",
-
   "header.language": "Sprache",
   "role.0": "Gast",
   "role.1": "Nutzer",
   "role.2": "Editor",
   "role.3": "Admin",
   "role.admin_badge": "Admin",
-
   "auth.login": "Anmelden",
   "auth.logout": "Abmelden",
   "auth.title": "Mit GameVault anmelden",
@@ -28,12 +25,10 @@
   "auth.loggedIn": "Willkommen, {name}!",
   "auth.loggedOut": "Du bist abgemeldet.",
   "auth.moved": "Angemeldet. Aus diesem Browser auf dein Konto übertragen: {votes} Stimme(n), {wishes} Wunsch/Wünsche.",
-
   "client.title": "Desktop-Client holen",
   "client.text": "Spiele die Spiele dieses Servers, verfolge deine Wünsche und werde benachrichtigt, sobald sie verfügbar sind.",
   "client.download": "Herunterladen",
   "client.hide": "Ausblenden",
-
   "search.title": "Spiel wünschen",
   "search.subtitle": "Durchsuche den Steam-Store nach Name, AppID oder Store-Link.",
   "search.label": "Spiele suchen",
@@ -44,8 +39,6 @@
   "search.noResults": "Keine Spiele gefunden.",
   "search.fallback": "Nicht auf Steam gefunden – Ergebnisse von {provider}.",
   "search.providerResults": "Ergebnisse von {provider}.",
-  "search.tryProvider": "Nicht dabei? Suche bei {provider}",
-  "search.backToSteam": "Zurück zu den Steam-Ergebnissen",
   "search.providerGeneric": "dem Metadaten-Anbieter",
   "search.inGameVault": "Schon in GameVault",
   "search.alreadyWished": "Schon gewünscht",
@@ -56,7 +49,6 @@
   "search.loginToWish": "Melde dich an, um Spiele zu wünschen und abzustimmen.",
   "search.wishingDisabled": "Wünschen und Abstimmen ist für Gäste auf dieser Seite nicht freigeschaltet.",
   "search.roleTooLow": "Deine GameVault-Rolle erlaubt hier kein Wünschen oder Abstimmen.",
-
   "list.sort": "Sortierung",
   "list.sortVotes": "Meiste Stimmen",
   "list.sortNew": "Neueste",
@@ -72,7 +64,6 @@
   "list.emptyHint": "Suche oben ein Spiel und äußere den ersten Wunsch.",
   "list.loadMore": "Mehr laden",
   "list.shown": "{shown} von {total}",
-
   "status.new": "Neu",
   "status.queued": "Eingeplant",
   "status.paused": "Pausiert",
@@ -85,7 +76,6 @@
   "status.available.help": "Das Spiel ist in GameVault. Die Abstimmung endet, Abstimmende werden benachrichtigt.",
   "availability.available": "Verfügbar",
   "availability.not_available": "Noch nicht verfügbar",
-
   "wish.vote": "Stimme",
   "wish.votes": "Stimmen",
   "wish.voteAction": "Abstimmen",
@@ -99,13 +89,11 @@
   "wish.comingSoon": "Erscheint {date}",
   "wish.comingSoonNoDate": "Erscheint bald",
   "wish.sourceSteam": "Steam-Store",
-  "wish.sourceProvider": "Quelle",
   "wish.categories": "Kategorien",
   "wish.reason": "Begründung",
   "wish.note": "Notiz",
   "wish.wishedBy": "Gewünscht von {names}",
   "wish.removedLastVote": "Deine Stimme war die letzte, der Wunsch „{title}“ wurde entfernt.",
-
   "admin.edit": "Bearbeiten",
   "admin.editTitle": "„{title}“ bearbeiten",
   "admin.status": "Status",
@@ -134,7 +122,6 @@
   "admin.countVotes": "Stimmen",
   "admin.countAnonymous": "Anonyme Abstimmende",
   "admin.countUsers": "Konten",
-
   "tags.title": "Steam-Tags – {title}",
   "tags.hint": "Tag anklicken, um ihn zu kopieren.",
   "tags.copyOne": "Tag {tag} kopieren",
@@ -142,16 +129,13 @@
   "tags.copied": "Kopiert",
   "tags.copyFailed": "Kopieren fehlgeschlagen. Dein Browser hat die Zwischenablage blockiert.",
   "tags.empty": "Keine Steam-Tags für dieses Spiel.",
-
   "footer.synced": "Bibliothek abgeglichen",
   "footer.notSynced": "Bibliothek noch nicht abgeglichen.",
   "footer.poweredBy": "WishVault {version}",
   "footer.source": "Quellcode",
-
   "time.seconds": "{count} s",
   "time.minutes": "{count} min",
   "time.hours": "{count} h",
-
   "error.unauthorized": "Deine Sitzung ist abgelaufen. Bitte melde dich neu an.",
   "error.forbidden": "Das darfst du nicht.",
   "error.role_too_low": "Deine GameVault-Rolle reicht dafür nicht aus.",
@@ -171,5 +155,15 @@
   "error.not_implemented": "Diese Funktion gibt es auf diesem Server noch nicht.",
   "error.internal_error": "Etwas ist schiefgelaufen. Bitte versuche es noch einmal.",
   "error.network": "Keine Verbindung zum Server.",
-  "error.retry_after": "Versuche es in {time} wieder."
+  "error.retry_after": "Versuche es in {time} wieder.",
+  "common.undo": "Rückgängig",
+  "wish.restored": "Wiederhergestellt: {title}",
+  "wish.providerShort": "Anbieter",
+  "search.clear": "Suche leeren",
+  "search.searching": "Suche läuft …",
+  "search.noResultsSteam": "Auf Steam nichts gefunden.",
+  "search.providerShort": "Anbieter",
+  "search.sourceLabel": "Suchen in",
+  "list.tab.voted": "Meine Stimmen",
+  "list.empty.voted": "Du hast noch für keinen Wunsch gestimmt."
 }

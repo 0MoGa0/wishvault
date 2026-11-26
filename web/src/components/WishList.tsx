@@ -13,7 +13,7 @@ export function WishList() {
   const t = useT();
   const { me, wishesVersion } = useApp();
   const account = isAccount(me);
-  const tabs: WishFilter[] = account ? ["open", "available", "rejected", "all"] : ["open", "available"];
+  const tabs: WishFilter[] = account ? ["open", "available", "voted", "rejected", "all"] : ["open", "available", "voted"];
   const [filter, setFilter] = useState<WishFilter>("open");
   const [sort, setSort] = useState<WishSort>("votes");
   const [items, setItems] = useState<Wish[]>([]);
@@ -110,7 +110,7 @@ export function WishList() {
             onKeyDown={(e) => onTabKey(e, i)}
             className={cx(
               "-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-              current === f ? "border-accent text-text" : "border-transparent text-muted hover:text-text",
+              current === f ? "border-accent text-text" : "border-transparent text-muted hover:border-border hover:bg-surface-2 hover:text-text",
             )}
           >
             {t(`list.tab.${f}` as MessageKey)}

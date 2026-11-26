@@ -7,12 +7,14 @@ import { SearchPanel } from "./components/SearchPanel";
 import { Toasts, type ToastItem } from "./components/Toasts";
 import { WishList } from "./components/WishList";
 import { Button, Spinner } from "./components/ui";
-import { AppContext, guestMe, isAdmin, type AppState, type ToastKind } from "./context";
+import { AppContext, guestMe, isAdmin, type AppState, type ToastAction, type ToastKind } from "./context";
 import { useT } from "./i18n";
 import { formatDateTime, formatRelative } from "./lib/format";
 
 const SOURCE_URL = "https://github.com/0MoGa0/wishvault";
 const TOAST_MS = 6000;
+/** Toasts with an action (Undo) stay longer. */
+const TOAST_ACTION_MS = 10000;
 
 function Unavailable() {
   const t = useT();
@@ -77,10 +79,10 @@ export function App({ info }: { info: Info | null }) {
   const dismiss = useCallback((id: number) => setToasts((list) => list.filter((x) => x.id !== id)), []);
 
   const toast = useCallback(
-    (message: string, kind: ToastKind = "info") => {
+    (message: string, kind: ToastKind = "info", action?: ToastAction) => {
       const id = nextToast.current++;
-      setToasts((list) => [...list.slice(-3), { id, message, kind }]);
-      setTimeout(() => dismiss(id), TOAST_MS);
+      setToasts((list) => [...list.slice(-3), { id, message, kind, action }]);
+      setTimeout(() => dismiss(id), action ? TOAST_ACTION_MS : TOAST_MS);
     },
     [dismiss],
   );
