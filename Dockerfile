@@ -23,7 +23,7 @@ USER root
 RUN install-php-extensions intl \
  && mkdir -p /var/www/data \
  && chown www-data:www-data /var/www/data
-COPY --chmod=755 docker/s6-rc.d/ /etc/s6-overlay/s6-rc.d/
+COPY --chmod=755 docker/s6-overlay/ /etc/s6-overlay/
 
 USER www-data
 WORKDIR /var/www/html
