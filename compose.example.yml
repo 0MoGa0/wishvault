@@ -1,0 +1,22 @@
+# Example: WishVault next to an existing GameVault server.
+# Put it behind your reverse proxy (HTTPS is required for the login cookie).
+services:
+  wishvault:
+    image: ghcr.io/0moga0/wishvault:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - wishvault-data:/var/www/data
+    environment:
+      GAMEVAULT_URL: https://gamevault.example.com
+      # Bot account with the GameVault role "Editor" (needed for the provider search)
+      GAMEVAULT_USERNAME: wishvault
+      GAMEVAULT_PASSWORD: change-me
+      PUBLIC_URL: https://wishes.example.com
+      # IP/CIDR of your reverse proxy, so client IPs and HTTPS are detected
+      TRUSTED_PROXIES: 172.16.0.0/12
+      TZ: UTC
+
+volumes:
+  wishvault-data:

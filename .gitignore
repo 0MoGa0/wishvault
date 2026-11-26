@@ -1,0 +1,9 @@
+/vendor/
+/data/
+/.env
+/.phpunit.result.cache
+/.phpunit.cache/
+/public/*
+!/public/index.php
+web/node_modules/
+web/src/api/schema.d.ts

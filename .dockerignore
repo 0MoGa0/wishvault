@@ -1,0 +1,12 @@
+*
+!Dockerfile
+!composer.json
+!composer.lock
+!openapi.yaml
+!src/
+!bin/
+!public/index.php
+!docker/
+!web/
+web/node_modules
+web/dist

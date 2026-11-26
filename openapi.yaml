@@ -1,0 +1,849 @@
+openapi: 3.1.0
+info:
+  title: WishVault API
+  version: 1.0.0
+  summary: Game wishlist with voting for GameVault servers.
+  description: |
+    WishVault lets players wish for games, vote on wishes and follow their
+    status. Accounts come from a GameVault server; guests may take part
+    anonymously when the operator allows it.
+
+    ## Authentication
+    Three ways, checked in this order:
+
+    1. **Bearer** – `Authorization: Bearer <GameVault access token>`. Used by
+       native clients. WishVault validates the token against
+       `GET {GAMEVAULT_URL}/api/users/me` (cached for 5 minutes under a hash of
+       the token). Tokens are never stored or logged.
+    2. **Session cookie** (`wv_session`) – set by `POST /auth/login` (web UI).
+    3. **Anonymous cookie** (`wv_anon`) – random token issued on the first
+       write request of a guest when `ANON_ENABLED` is on.
+
+    Requests without any of these are anonymous and read-only.
+
+    ## CSRF
+    Every non-GET request authenticated by a cookie must send the header
+    `X-Requested-With: WishVault` and, if present, a same-origin `Origin`.
+    Otherwise the request fails with `403 csrf_failed`. Bearer requests are
+    exempt. CORS is enabled for Bearer requests only, without credentials.
+
+    ## Roles
+    GameVault roles: `0` guest, `1` user, `2` editor, `3` admin.
+    An account needs at least `wish_min_role` (default 1) to use WishVault and
+    `admin_min_role` (default 3) for admin functions (see `GET /info`).
+    Visibility per caller:
+
+    | Field | anonymous | account | admin |
+    | --- | --- | --- | --- |
+    | `availability` | yes | yes | yes |
+    | `status`, `reason`, `wished_by` | – (`null`) | yes | yes |
+    | `note`, `anonymous_votes` | – (`null`) | – (`null`) | yes |
+
+    ## Errors
+    Every error uses the `Error` schema. `error.code` is stable and meant for
+    translation in clients; `error.message` is English and only for debugging.
+
+    ## Times
+    All timestamps are RFC 3339 in UTC.
+  license:
+    name: AGPL-3.0-only
+    identifier: AGPL-3.0-only
+servers:
+  - url: /api/v1
+tags:
+  - name: service
+  - name: auth
+  - name: search
+  - name: wishes
+  - name: events
+  - name: admin
+security:
+  - {}
+  - bearerAuth: []
+  - sessionCookie: []
+  - anonCookie: []
+
+paths:
+  /info:
+    get:
+      tags: [service]
+      operationId: getInfo
+      summary: Service information (also used by clients to detect the service)
+      security: [{}]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Info" }
+
+  /me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: Current caller
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { $ref: "#/components/responses/UpstreamError" }
+
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Web login with GameVault credentials
+      description: |
+        Checks the credentials against the GameVault server and starts a
+        WishVault session (cookie `wv_session`, HttpOnly, Secure, SameSite=Lax,
+        30 days). The password and the GameVault token are discarded.
+        Votes and wishes of the caller's anonymous token are moved to the
+        account (duplicate votes are dropped) and the anonymous token is
+        deleted. Failed attempts are limited per IP (`login_locked`).
+      security: [{}, anonCookie: []]
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Logged in
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: "`wv_session=...`; clears `wv_anon`"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401":
+          description: "`login_failed` – wrong credentials or account disabled"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502": { $ref: "#/components/responses/UpstreamError" }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: End the web session
+      security: [sessionCookie: []]
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      responses:
+        "204":
+          description: Logged out (also when there was no session)
+
+  /search:
+    get:
+      tags: [search]
+      operationId: search
+      summary: Search games to wish for
+      description: |
+        `source=steam` (default) searches the Steam store. If Steam has no
+        results, the service falls back to the highest-priority metadata
+        provider of the GameVault server and sets `fallback: true`.
+        `source=provider` searches the provider directly ("not listed? search
+        IGDB"). Returns at most 10 results.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 100 }
+        - name: source
+          in: query
+          schema: { $ref: "#/components/schemas/Source" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SearchResponse" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502": { $ref: "#/components/responses/UpstreamError" }
+
+  /wishes:
+    get:
+      tags: [wishes]
+      operationId: listWishes
+      summary: List wishes
+      description: |
+        `rejected` and `all` require an account (`403 forbidden` otherwise).
+        Anonymous callers see rejected wishes nowhere.
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [open, available, rejected, all]
+            default: open
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [votes, new]
+            default: votes
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WishList" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [wishes]
+      operationId: createWish
+      summary: Wish for a game (or vote +1 if it is already wished)
+      description: |
+        Details (title, images, release date, categories) are fetched by the
+        service from the source; clients only send the id.
+        Anonymous callers receive a `wv_anon` cookie on their first request.
+        Fails with `already_in_library` if the game is already in GameVault.
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateWishRequest" }
+      responses:
+        "200":
+          description: Wish existed, the caller's vote was added (or was already there)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateWishResponse" }
+        "201":
+          description: New wish created with the caller's vote
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateWishResponse" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "502": { $ref: "#/components/responses/UpstreamError" }
+
+  /wishes/{id}:
+    parameters:
+      - $ref: "#/components/parameters/WishId"
+    get:
+      tags: [wishes]
+      operationId: getWish
+      summary: One wish
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Wish" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [admin]
+      operationId: updateWish
+      summary: Change status, reason or note (admin)
+      description: |
+        Setting `status: available` by hand is allowed (e.g. the match failed);
+        it creates `available` events like the automatic sync. Setting
+        `rejected` creates `rejected` events. `null` clears `reason`/`note`.
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateWishRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Wish" }
+        "400": { $ref: "#/components/responses/ValidationFailed" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [admin]
+      operationId: deleteWish
+      summary: Delete a wish with all votes and events (admin)
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /wishes/{id}/vote:
+    parameters:
+      - $ref: "#/components/parameters/WishId"
+    put:
+      tags: [wishes]
+      operationId: vote
+      summary: Vote for a wish (idempotent)
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Wish" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      tags: [wishes]
+      operationId: unvote
+      summary: Withdraw the caller's vote (idempotent)
+      description: |
+        If this was the last vote and the wish is still `new`, the wish is
+        deleted (`wish: null, deleted: true`).
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnvoteResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /wishes/{id}/tags:
+    parameters:
+      - $ref: "#/components/parameters/WishId"
+    get:
+      tags: [admin]
+      operationId: getWishTags
+      summary: Steam user tags of a wish (admin, Steam wishes only)
+      responses:
+        "200":
+          description: OK (empty list for provider wishes)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tags]
+                properties:
+                  tags:
+                    type: array
+                    items: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/UpstreamError" }
+
+  /events:
+    get:
+      tags: [events]
+      operationId: listEvents
+      summary: Events of the caller's account (badge, "newly available")
+      description: |
+        An account receives an event when a wish it created or voted for
+        becomes `available`, gets released on Steam, or is `rejected`.
+        Newest first, at most 100.
+      security: [bearerAuth: [], sessionCookie: []]
+      parameters:
+        - name: unread
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /events/read:
+    post:
+      tags: [events]
+      operationId: markEventsRead
+      summary: Mark events as read
+      security: [bearerAuth: [], sessionCookie: []]
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  description: Event ids. Omitted or empty = all events of the caller.
+                  type: array
+                  items: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [unread]
+                properties:
+                  unread: { type: integer, minimum: 0 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/sync:
+    post:
+      tags: [admin]
+      operationId: requestSync
+      summary: Ask the worker to sync with GameVault now (admin)
+      description: Sets a flag; the worker picks it up within about 10 seconds.
+      security: [bearerAuth: [], sessionCookie: []]
+      parameters:
+        - $ref: "#/components/parameters/XRequestedWith"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requested_at]
+                properties:
+                  requested_at: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /admin/status:
+    get:
+      tags: [admin]
+      operationId: getAdminStatus
+      summary: Service status (admin)
+      security: [bearerAuth: [], sessionCookie: []]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: GameVault access token
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: wv_session
+    anonCookie:
+      type: apiKey
+      in: cookie
+      name: wv_anon
+
+  parameters:
+    WishId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    XRequestedWith:
+      name: X-Requested-With
+      in: header
+      required: false
+      description: Required (value `WishVault`) for cookie-authenticated requests.
+      schema: { type: string, const: WishVault }
+
+  responses:
+    Unauthorized:
+      description: "`unauthorized` – Bearer token invalid/expired or session expired"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: "`forbidden`, `role_too_low`, `anonymous_disabled` or `csrf_failed`"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: "`not_found` (wish) or `source_not_found` (game id unknown at the source)"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: "`already_in_library` or `wish_closed` (voting on a rejected/available wish)"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationFailed:
+      description: "`validation_failed`, details per field in `error.details`"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: "`rate_limited` or `login_locked`"
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Seconds
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    UpstreamError:
+      description: "`gamevault_unavailable`, `steam_unavailable` or `provider_unavailable`"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    ErrorCode:
+      type: string
+      enum:
+        - unauthorized
+        - forbidden
+        - role_too_low
+        - anonymous_disabled
+        - csrf_failed
+        - not_found
+        - source_not_found
+        - validation_failed
+        - already_in_library
+        - wish_closed
+        - rate_limited
+        - login_failed
+        - login_locked
+        - gamevault_unavailable
+        - steam_unavailable
+        - provider_unavailable
+        - not_implemented
+        - internal_error
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { $ref: "#/components/schemas/ErrorCode" }
+            message: { type: string, description: English, for debugging only }
+            details:
+              type: object
+              description: "For `validation_failed`: field name → error code (`required`, `invalid`, `too_short`, `too_long`)"
+              additionalProperties: { type: string }
+
+    Source:
+      type: string
+      enum: [steam, provider]
+      default: steam
+
+    Status:
+      type: string
+      description: |
+        `new` just wished · `queued` admin plans to add it · `paused` on hold
+        (e.g. not released yet) · `rejected` will not be added ·
+        `available` the game is in GameVault.
+      enum: [new, queued, paused, rejected, available]
+
+    Info:
+      type: object
+      required: [service, name, version, api_version, theme, custom_css, default_locale, locales, features, roles, sync_interval_seconds]
+      properties:
+        service: { type: string, const: wishvault, description: Fixed marker for service detection }
+        name: { type: string, description: "SITE_NAME", examples: [WishVault] }
+        version: { type: string, examples: [1.0.0] }
+        api_version: { type: string, const: "1" }
+        logo_url: { type: [string, "null"], description: "SITE_LOGO_URL" }
+        theme: { type: string, description: "THEME, name of the active web theme", examples: [default] }
+        custom_css: { type: boolean, description: "A custom stylesheet is served at /custom.css" }
+        default_locale: { type: string, examples: [en] }
+        locales: { type: array, items: { type: string }, examples: [[en, de]] }
+        client_download_url: { type: [string, "null"], description: "CLIENT_DOWNLOAD_URL; null hides the hint" }
+        gamevault_url: { type: string, format: uri, description: "Public URL of the GameVault server" }
+        features:
+          type: object
+          required: [anonymous, provider_search, web_login]
+          properties:
+            anonymous: { type: boolean, description: Guests may wish and vote }
+            provider_search: { type: boolean, description: Provider fallback search is configured }
+            web_login: { type: boolean }
+        roles:
+          type: object
+          required: [wish_min_role, admin_min_role]
+          properties:
+            wish_min_role: { type: integer, minimum: 0, maximum: 3 }
+            admin_min_role: { type: integer, minimum: 0, maximum: 3 }
+        sync_interval_seconds: { type: integer }
+        last_sync_at: { type: [string, "null"], format: date-time }
+
+    User:
+      type: object
+      required: [id, username, role, is_admin]
+      properties:
+        id: { type: integer, description: GameVault user id }
+        username: { type: string }
+        role: { type: integer, minimum: 0, maximum: 3 }
+        is_admin: { type: boolean }
+
+    UserRef:
+      type: object
+      required: [id, username]
+      properties:
+        id: { type: integer }
+        username: { type: string }
+
+    Me:
+      type: object
+      required: [kind, user, can_wish, unread_events]
+      properties:
+        kind:
+          type: string
+          enum: [anonymous, user]
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/User"
+            - type: "null"
+        can_wish:
+          type: boolean
+          description: "false for guests when ANON_ENABLED is off, or when the role is below wish_min_role"
+        unread_events: { type: integer, minimum: 0, description: Always 0 for anonymous callers }
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 255 }
+        password: { type: string, minLength: 1, maxLength: 1024 }
+
+    LoginResponse:
+      type: object
+      required: [me, moved]
+      properties:
+        me: { $ref: "#/components/schemas/Me" }
+        moved:
+          type: object
+          description: What was moved from the anonymous token to the account
+          required: [votes, wishes]
+          properties:
+            votes: { type: integer, minimum: 0 }
+            wishes: { type: integer, minimum: 0 }
+
+    SearchResult:
+      type: object
+      required: [source, source_id, title, image_url, release_date, coming_soon, store_url, wish_id, voted, gamevault_game_id]
+      properties:
+        source: { $ref: "#/components/schemas/Source" }
+        source_id: { type: string, description: "Steam AppID or provider data id" }
+        title: { type: string }
+        image_url: { type: [string, "null"] }
+        release_date: { type: [string, "null"], description: "As given by the source, free text (e.g. `Q3 2027`) or ISO date" }
+        coming_soon: { type: boolean }
+        store_url: { type: [string, "null"] }
+        wish_id: { type: [integer, "null"], description: Existing wish for this game }
+        voted: { type: boolean, description: The caller already voted for the existing wish }
+        gamevault_game_id: { type: [integer, "null"], description: Game is already in GameVault }
+
+    SearchResponse:
+      type: object
+      required: [source, fallback, provider, results]
+      properties:
+        source: { $ref: "#/components/schemas/Source" }
+        fallback: { type: boolean, description: "Steam had no results, these are provider results" }
+        provider:
+          description: The GameVault metadata provider used (when `source` is `provider`)
+          oneOf:
+            - type: object
+              required: [slug, name]
+              properties:
+                slug: { type: string, examples: [igdb] }
+                name: { type: string, examples: [IGDB] }
+            - type: "null"
+        results:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/SearchResult" }
+
+    Wish:
+      type: object
+      required:
+        - id
+        - source
+        - source_id
+        - title
+        - image_url
+        - release_date
+        - coming_soon
+        - store_url
+        - categories
+        - availability
+        - status
+        - reason
+        - note
+        - votes
+        - anonymous_votes
+        - voted
+        - created_by_me
+        - wished_by
+        - gamevault_game_id
+        - created_at
+        - updated_at
+        - available_at
+      properties:
+        id: { type: integer }
+        source: { $ref: "#/components/schemas/Source" }
+        source_id: { type: string }
+        title: { type: string }
+        image_url: { type: [string, "null"], description: "Header image (Steam) or cover (provider)" }
+        release_date: { type: [string, "null"] }
+        coming_soon: { type: boolean }
+        store_url: { type: [string, "null"] }
+        categories:
+          type: array
+          description: "Steam categories, e.g. `Multi-player`, `Online Co-op`, `LAN PvP`"
+          items: { type: string }
+        availability:
+          type: string
+          enum: [available, not_available]
+        status:
+          description: "`null` for anonymous callers"
+          oneOf:
+            - $ref: "#/components/schemas/Status"
+            - type: "null"
+        reason: { type: [string, "null"], description: "Public reason for the status (accounts only)" }
+        note: { type: [string, "null"], description: "Internal admin note (admins only)" }
+        votes: { type: integer, minimum: 0, description: All votes incl. anonymous ones }
+        anonymous_votes: { type: [integer, "null"], description: Admins only }
+        voted: { type: boolean }
+        created_by_me: { type: boolean }
+        wished_by:
+          description: "Accounts that wished or voted (accounts only, `null` for anonymous callers). Anonymous voters are not listed."
+          oneOf:
+            - type: array
+              items: { $ref: "#/components/schemas/UserRef" }
+            - type: "null"
+        gamevault_game_id: { type: [integer, "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        available_at: { type: [string, "null"], format: date-time }
+
+    WishList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Wish" }
+        total: { type: integer, minimum: 0 }
+
+    CreateWishRequest:
+      type: object
+      required: [source, source_id]
+      properties:
+        source: { $ref: "#/components/schemas/Source" }
+        source_id: { type: string, minLength: 1, maxLength: 64 }
+
+    CreateWishResponse:
+      type: object
+      required: [wish, created]
+      properties:
+        wish: { $ref: "#/components/schemas/Wish" }
+        created: { type: boolean }
+
+    UpdateWishRequest:
+      type: object
+      minProperties: 1
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        reason: { type: [string, "null"], maxLength: 500 }
+        note: { type: [string, "null"], maxLength: 2000 }
+
+    UnvoteResponse:
+      type: object
+      required: [wish, deleted]
+      properties:
+        wish:
+          oneOf:
+            - $ref: "#/components/schemas/Wish"
+            - type: "null"
+        deleted: { type: boolean }
+
+    Event:
+      type: object
+      required: [id, type, wish, created_at, read]
+      properties:
+        id: { type: integer }
+        type:
+          type: string
+          enum: [available, released, rejected]
+        wish:
+          type: object
+          description: Snapshot, still present if the wish was deleted later
+          required: [id, title, image_url, gamevault_game_id]
+          properties:
+            id: { type: integer }
+            title: { type: string }
+            image_url: { type: [string, "null"] }
+            gamevault_game_id: { type: [integer, "null"] }
+        created_at: { type: string, format: date-time }
+        read: { type: boolean }
+
+    EventList:
+      type: object
+      required: [items, unread]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Event" }
+        unread: { type: integer, minimum: 0 }
+
+    AdminStatus:
+      type: object
+      required: [worker_seen_at, sync_pending, last_sync, last_release_check_at, counts]
+      properties:
+        worker_seen_at: { type: [string, "null"], format: date-time, description: Last heartbeat of the worker }
+        sync_pending: { type: boolean }
+        last_sync:
+          oneOf:
+            - type: object
+              required: [started_at, finished_at, ok, error, games, matched]
+              properties:
+                started_at: { type: string, format: date-time }
+                finished_at: { type: [string, "null"], format: date-time }
+                ok: { type: boolean }
+                error: { type: [string, "null"] }
+                games: { type: integer, description: Games mirrored from GameVault }
+                matched: { type: integer, description: Wishes newly marked available }
+            - type: "null"
+        last_release_check_at: { type: [string, "null"], format: date-time }
+        counts:
+          type: object
+          required: [wishes, votes, anonymous_voters, users]
+          properties:
+            wishes: { type: integer }
+            votes: { type: integer }
+            anonymous_voters: { type: integer }
+            users: { type: integer }

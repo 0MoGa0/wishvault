@@ -1,0 +1,33 @@
+/*
+ * Theme "default" – WishVault's own neutral look.
+ * A theme file only sets token values. Components use the tokens only
+ * (see src/index.css), never fixed colours or fonts.
+ */
+:root {
+  --wv-bg: #f6f7f9;
+  --wv-surface: #ffffff;
+  --wv-surface-2: #eef0f4;
+  --wv-border: #d9dde5;
+  --wv-text: #161a22;
+  --wv-text-muted: #5b6475;
+  --wv-accent: #6d4aff;
+  --wv-accent-text: #ffffff;
+  --wv-success: #1f9d55;
+  --wv-warning: #c27c0e;
+  --wv-danger: #d64045;
+  --wv-radius: 0.75rem;
+  --wv-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wv-bg: #0f1117;
+    --wv-surface: #171a23;
+    --wv-surface-2: #1f2330;
+    --wv-border: #2b3040;
+    --wv-text: #e8eaf0;
+    --wv-text-muted: #9aa3b5;
+    --wv-accent: #8b70ff;
+    --wv-accent-text: #ffffff;
+  }
+}

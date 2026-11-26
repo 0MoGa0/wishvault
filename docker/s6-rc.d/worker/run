@@ -1,0 +1,4 @@
+#!/command/with-contenv sh
+# Background jobs of WishVault (sync, release check). Restarted by s6 on exit.
+cd /var/www/html || exit 1
+exec php bin/worker.php

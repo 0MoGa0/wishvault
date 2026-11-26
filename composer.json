@@ -1,0 +1,33 @@
+{
+    "name": "wishvault/wishvault",
+    "description": "Game wishlist with voting for GameVault servers",
+    "type": "project",
+    "license": "AGPL-3.0-only",
+    "require": {
+        "php": ">=8.4",
+        "ext-pdo_sqlite": "*",
+        "ext-curl": "*",
+        "ext-mbstring": "*",
+        "ext-intl": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.0",
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": { "WishVault\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "WishVault\\Tests\\": "tests/" }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse --memory-limit=512M",
+        "lint": "find src public bin tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null",
+        "serve": "php -S 127.0.0.1:8080 -t public public/index.php"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform-check": false
+    }
+}

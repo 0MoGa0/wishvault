@@ -1,0 +1,31 @@
+{
+  "name": "wishvault-web",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm gen:api && tsc --noEmit && vite build",
+    "gen:api": "openapi-typescript ../openapi.yaml -o src/api/schema.d.ts",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "mock": "prism mock ../openapi.yaml --port 4010",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@stoplight/prism-cli": "^5.16.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.1",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "openapi-typescript": "^7.13.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}

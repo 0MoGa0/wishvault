@@ -1,0 +1,3 @@
+allowBuilds:
+  # analytics postinstall of the prism mock server, never needed
+  '@scarf/scarf': false
