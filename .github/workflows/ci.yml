@@ -83,6 +83,9 @@ jobs:
           sleep 3
           docker exec wv php -r '$p=new PDO("sqlite:/var/www/data/wishvault.sqlite"); echo $p->query("SELECT value FROM jobs_state WHERE key=\"worker_seen\"")->fetchColumn(), PHP_EOL;' | grep -q Z
           docker logs wv | tail -20
+      - name: Container logs
+        if: always()
+        run: docker logs wv 2>&1 | tail -80 || true
       - name: Log in to ghcr.io
         if: github.event_name == 'push'
         uses: docker/login-action@v3
