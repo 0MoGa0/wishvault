@@ -602,6 +602,14 @@ components:
         locales: { type: array, items: { type: string }, examples: [[en, de]] }
         client_download_url: { type: [string, "null"], description: "CLIENT_DOWNLOAD_URL; null hides the hint" }
         gamevault_url: { type: string, format: uri, description: "Public URL of the GameVault server" }
+        provider:
+          description: |
+            Active metadata provider of the GameVault server (refreshed by each
+            library sync), so clients can label the provider search up front.
+            `null` when provider search is off or not known yet.
+          oneOf:
+            - $ref: "#/components/schemas/Provider"
+            - type: "null"
         features:
           type: object
           required: [anonymous, provider_search, web_login]
@@ -685,6 +693,12 @@ components:
         voted: { type: boolean, description: The caller already voted for the existing wish }
         gamevault_game_id: { type: [integer, "null"], description: Game is already in GameVault }
 
+    Provider:
+      type: object
+      required: [slug, name]
+      properties:
+        slug: { type: string, examples: [igdb] }
+        name: { type: string, examples: [IGDB] }
     SearchResponse:
       type: object
       required: [source, fallback, provider, results]
@@ -694,11 +708,7 @@ components:
         provider:
           description: The GameVault metadata provider used (when `source` is `provider`)
           oneOf:
-            - type: object
-              required: [slug, name]
-              properties:
-                slug: { type: string, examples: [igdb] }
-                name: { type: string, examples: [IGDB] }
+            - $ref: "#/components/schemas/Provider"
             - type: "null"
         results:
           type: array

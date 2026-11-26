@@ -155,8 +155,10 @@ final class WorkerTest extends TestCase
             ],
         ]);
 
+        $this->http->json('#/api/metadata/providers$#', [['slug' => 'igdb', 'name' => 'IGDB', 'priority' => 10, 'enabled' => true]]);
         $this->worker()->sync();
 
+        self::assertSame(['slug' => 'igdb', 'name' => 'IGDB'], (new JobsState($this->pdo, $this->clock))->get('provider'));
         $state = (new JobsState($this->pdo, $this->clock))->get('last_sync');
         self::assertIsArray($state);
         self::assertTrue($state['ok']);
@@ -215,7 +217,7 @@ final class WorkerTest extends TestCase
         self::assertIsArray($state);
         self::assertFalse($state['ok']);
         self::assertSame('gamevault_unavailable', $state['error']);
-        self::assertSame(['sync failed: gamevault_unavailable'], $this->logs);
+        self::assertSame(['provider lookup failed: gamevault_unavailable', 'sync failed: gamevault_unavailable'], $this->logs);
         $info = self::body(self::send($this->app(), 'GET', '/api/v1/info'));
         self::assertSame('2026-06-01T12:00:00Z', $info['last_sync_at'], 'last successful sync');
     }

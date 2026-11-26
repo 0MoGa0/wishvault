@@ -165,5 +165,6 @@
   "search.providerShort": "Provider",
   "search.sourceLabel": "Search in",
   "list.tab.voted": "My votes",
-  "list.empty.voted": "You have not voted for any wish yet."
+  "list.empty.voted": "You have not voted for any wish yet.",
+  "common.scrollTop": "Back to top"
 }

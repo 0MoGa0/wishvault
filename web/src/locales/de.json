@@ -165,5 +165,6 @@
   "search.providerShort": "Anbieter",
   "search.sourceLabel": "Suchen in",
   "list.tab.voted": "Meine Stimmen",
-  "list.empty.voted": "Du hast noch für keinen Wunsch gestimmt."
+  "list.empty.voted": "Du hast noch für keinen Wunsch gestimmt.",
+  "common.scrollTop": "Nach oben"
 }

@@ -149,6 +149,7 @@ final class Worker
             $counts = $sync->run();
             $result = ['ok' => true] + $counts + $result;
             $this->state->set('last_sync_ok_at', $this->now());
+            $this->rememberProvider();
         } catch (ApiError $e) {
             $result['error'] = $e->errorCode;
             $this->log('sync failed: ' . $e->errorCode);
@@ -165,6 +166,24 @@ final class Worker
                 "DELETE FROM jobs_state WHERE key = 'sync_requested' AND value = :v",
                 ['v' => json_encode($requested, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)],
             );
+        }
+    }
+
+    /**
+     * Name of the active metadata provider for /info, so clients can label
+     * the provider search before the first provider request.
+     */
+    private function rememberProvider(): void
+    {
+        if (!$this->config->providerSearchEnabled()) {
+            $this->state->set('provider', null);
+            return;
+        }
+        try {
+            $this->state->set('provider', $this->gameVault->activeProvider());
+        } catch (ApiError $e) {
+            // keep the last known name, the next sync tries again
+            $this->log('provider lookup failed: ' . $e->errorCode);
         }
     }
 

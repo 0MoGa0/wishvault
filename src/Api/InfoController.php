@@ -30,6 +30,15 @@ final readonly class InfoController
             "SELECT json_extract(value, '$') FROM jobs_state WHERE key = 'last_sync_ok_at'",
         )->fetchColumn();
 
+        $provider = Database::run(
+            ($this->db)(),
+            "SELECT value FROM jobs_state WHERE key = 'provider'",
+        )->fetchColumn();
+        $provider = is_string($provider) ? json_decode($provider, true) : null;
+        $providerName = is_array($provider) && is_string($provider['name'] ?? null) && is_string($provider['slug'] ?? null)
+            ? ['slug' => $provider['slug'], 'name' => $provider['name']]
+            : null;
+
         return Response::json([
             'service' => 'wishvault',
             'name' => $this->config->siteName,
@@ -51,6 +60,7 @@ final readonly class InfoController
                 'wish_min_role' => $this->config->wishMinRole,
                 'admin_min_role' => $this->config->adminMinRole,
             ],
+            'provider' => $this->config->providerSearchEnabled() ? $providerName : null,
             'sync_interval_seconds' => $this->config->syncSeconds,
             'last_sync_at' => is_string($lastSync) ? $lastSync : null,
         ])->withHeader('Cache-Control', 'no-cache');

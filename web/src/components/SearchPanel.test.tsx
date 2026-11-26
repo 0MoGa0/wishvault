@@ -139,6 +139,14 @@ describe("SearchPanel", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("names the provider from /info before the first provider search", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(response([result()])));
+    renderWithApp(<SearchPanel />, { info: { ...info, provider: { slug: "igdb", name: "IGDB" } } });
+    await type("portal");
+    await settle();
+    expect(await screen.findByRole("radio", { name: "IGDB" })).toBeTruthy();
+  });
+
   it("clears the search with the clear button", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(response([result()])));
     renderWithApp(<SearchPanel />);

@@ -75,47 +75,50 @@ export function WishList() {
 
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 id={`${id}-title`} className="font-heading text-2xl font-bold tracking-tight">
-          {t("nav.wishlist")}
-          {!loading && !error && <span className="ml-2 text-base font-medium text-muted">{formatNumber(total)}</span>}
-        </h2>
-        <label className="flex items-center gap-2 text-sm">
-          <span className="text-muted">{t("list.sort")}</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as WishSort)}
-            className="h-9 rounded-wv-sm border border-border bg-surface px-2 text-sm text-text"
-          >
-            <option value="votes">{t("list.sortVotes")}</option>
-            <option value="new">{t("list.sortNew")}</option>
-          </select>
-        </label>
-      </div>
+      {/* Title, sort and tabs stay visible while scrolling through many wishes */}
+      <div className="sticky top-[var(--wv-header-h,3.75rem)] z-20 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 pt-3 backdrop-blur">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 id={`${id}-title`} className="font-heading text-2xl font-bold tracking-tight">
+            {t("nav.wishlist")}
+            {!loading && !error && <span className="ml-2 text-base font-medium text-muted">{formatNumber(total)}</span>}
+          </h2>
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted">{t("list.sort")}</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as WishSort)}
+              className="h-9 rounded-wv-sm border border-border bg-surface px-2 text-sm text-text"
+            >
+              <option value="votes">{t("list.sortVotes")}</option>
+              <option value="new">{t("list.sortNew")}</option>
+            </select>
+          </label>
+        </div>
 
-      <div role="tablist" aria-label={t("list.filter")} className="flex gap-1 overflow-x-auto border-b border-border">
-        {tabs.map((f, i) => (
-          <button
-            key={f}
-            ref={(el) => {
-              tabRefs.current[i] = el;
-            }}
-            type="button"
-            role="tab"
-            id={`${id}-tab-${f}`}
-            aria-selected={current === f}
-            aria-controls={`${id}-panel`}
-            tabIndex={current === f ? 0 : -1}
-            onClick={() => setFilter(f)}
-            onKeyDown={(e) => onTabKey(e, i)}
-            className={cx(
-              "-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-              current === f ? "border-accent text-text" : "border-transparent text-muted hover:border-border hover:bg-surface-2 hover:text-text",
-            )}
-          >
-            {t(`list.tab.${f}` as MessageKey)}
-          </button>
-        ))}
+        <div role="tablist" aria-label={t("list.filter")} className="flex gap-1 overflow-x-auto border-b border-border">
+          {tabs.map((f, i) => (
+            <button
+              key={f}
+              ref={(el) => {
+                tabRefs.current[i] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`${id}-tab-${f}`}
+              aria-selected={current === f}
+              aria-controls={`${id}-panel`}
+              tabIndex={current === f ? 0 : -1}
+              onClick={() => setFilter(f)}
+              onKeyDown={(e) => onTabKey(e, i)}
+              className={cx(
+                "-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
+                current === f ? "border-accent text-text" : "border-transparent text-muted hover:border-border hover:bg-surface-2 hover:text-text",
+              )}
+            >
+              {t(`list.tab.${f}` as MessageKey)}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${current}`} aria-busy={loading}>

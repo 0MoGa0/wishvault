@@ -6,6 +6,7 @@ namespace WishVault\Api;
 
 use WishVault\Auth\Auth;
 use WishVault\Clock;
+use WishVault\Config;
 use WishVault\Db\Database;
 use WishVault\Db\JobsState;
 use WishVault\Http\Context;
@@ -20,6 +21,7 @@ final readonly class AdminController
         private \PDO $pdo,
         private JobsState $state,
         private Clock $clock,
+        private Config $config,
     ) {
     }
 
@@ -52,7 +54,12 @@ final readonly class AdminController
                 'wishes' => $count('wishes'),
                 'votes' => $count('votes'),
                 'anonymous_voters' => $count('voters'),
-                'users' => $count('users'),
+                // the bot account is no real user (it may have logged in for a test)
+                'users' => (int) Data::int(Database::run(
+                    $this->pdo,
+                    'SELECT COUNT(*) FROM users WHERE username <> :bot COLLATE NOCASE',
+                    ['bot' => (string) $this->config->gamevaultUsername],
+                )->fetchColumn()),
             ],
         ]);
     }

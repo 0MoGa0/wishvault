@@ -135,7 +135,7 @@ final class App
         $searchC = new SearchController($auth, new Search($this->config, $steam, $gameVault, $wishes, $limiter, $this->clock));
         $wishC = new WishController($auth, $wishes);
         $eventC = new EventController($auth, $events);
-        $adminC = new AdminController($auth, $db, new JobsState($db, $this->clock), $this->clock);
+        $adminC = new AdminController($auth, $db, new JobsState($db, $this->clock), $this->clock, $this->config);
 
         $router = new Router();
         $p = self::API_PREFIX;

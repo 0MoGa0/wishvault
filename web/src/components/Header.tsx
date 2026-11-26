@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { endpoints } from "../api/client";
 import { guestMe, isAccount, useApp } from "../context";
 import { localeName, locales, setLocale, useLocale, useT, type MessageKey } from "../i18n";
@@ -63,8 +63,20 @@ export function Header() {
     }
   }
 
+  // Sticky elements below the header (list tabs) use its height.
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() =>
+      document.documentElement.style.setProperty("--wv-header-h", `${el.offsetHeight}px`),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
+    <header ref={headerRef} className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
         <a href="/" className="flex min-w-0 items-center gap-2.5 rounded-wv-sm">
           {info.logo_url && !logoFailed ? (

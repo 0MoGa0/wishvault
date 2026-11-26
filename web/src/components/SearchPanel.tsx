@@ -102,8 +102,10 @@ export function SearchPanel() {
     }
   }
 
-  const provider = response?.provider?.name ?? providerName ?? t("search.providerGeneric");
-  const providerShort = response?.provider?.name ?? providerName ?? t("search.providerShort");
+  // The service knows the active provider from its last library sync
+  const knownProvider = response?.provider?.name ?? providerName ?? info.provider?.name ?? null;
+  const provider = knownProvider ?? t("search.providerGeneric");
+  const providerShort = knownProvider ?? t("search.providerShort");
   const shown: Source = forceSteam ? "steam" : loading || !response ? source : response.source;
   const results = forceSteam ? [] : (response?.results ?? []);
 
@@ -186,7 +188,7 @@ export function SearchPanel() {
           )}
 
           {loading ? (
-            <ul aria-hidden="true" className="max-h-[70dvh] divide-y divide-border overflow-hidden rounded-wv border border-border">
+            <ul aria-hidden="true" className="max-h-[max(10rem,calc(100dvh-22rem))] divide-y divide-border overflow-hidden rounded-wv border border-border">
               {Array.from({ length: 4 }, (_, i) => (
                 <li key={i} className="flex animate-pulse items-center gap-3 bg-surface p-2.5 sm:gap-4">
                   <div className="aspect-[460/215] w-24 shrink-0 rounded-wv-sm bg-surface-2 sm:w-32" />
@@ -205,13 +207,13 @@ export function SearchPanel() {
           ) : (
             <ul
               aria-label={t("search.results")}
-              className="max-h-[70dvh] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border"
+              className="max-h-[max(10rem,calc(100dvh-22rem))] divide-y divide-border overflow-y-auto overscroll-contain rounded-wv border border-border [scrollbar-gutter:stable]"
             >
               {results.map((r) => {
                 const key = `${r.source}:${r.source_id}`;
                 const release = formatReleaseDate(r.release_date);
                 return (
-                  <li key={key} className="flex items-center gap-3 bg-surface p-2.5 transition-colors hover:bg-surface-2 sm:gap-4">
+                  <li key={key} className="flex items-center gap-3 bg-surface py-2.5 pr-3 pl-2.5 transition-colors hover:bg-surface-2 sm:gap-4">
                     <div className="relative shrink-0">
                       <GameArt src={r.image_url} title={r.title} className="aspect-[460/215] w-24 rounded-wv-sm sm:w-32" />
                       <SourceBadge source={r.source} providerName={providerShort} className="absolute right-1 bottom-1" />

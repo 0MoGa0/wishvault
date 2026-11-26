@@ -20,7 +20,19 @@ final class InfoTest extends TestCase
         self::assertSame('1', $body['api_version']);
         self::assertSame(['anonymous' => false, 'provider_search' => false, 'web_login' => true], $body['features']);
         self::assertNull($body['last_sync_at']);
+        self::assertNull($body['provider']);
         self::assertSame('nosniff', $res->headers['X-Content-Type-Options']);
+    }
+
+    public function testProviderFromTheLastSync(): void
+    {
+        $pdo = self::memoryDb();
+        $pdo->exec("INSERT INTO jobs_state (key, value, updated_at) VALUES ('provider', '{\"slug\":\"igdb\",\"name\":\"IGDB\"}', 'x')");
+        $bot = ['GAMEVAULT_USERNAME' => 'bot', 'GAMEVAULT_PASSWORD' => 'pw'];
+        $body = self::body(self::call(new App(self::config($bot), $pdo), 'GET', '/api/v1/info'));
+        self::assertSame(['slug' => 'igdb', 'name' => 'IGDB'], $body['provider']);
+        // provider search off: no provider
+        self::assertNull(self::body(self::call(new App(self::config(), $pdo), 'GET', '/api/v1/info'))['provider']);
     }
 
     public function testUnknownRouteIs404(): void

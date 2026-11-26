@@ -90,6 +90,13 @@ final class EventsAdminTest extends TestCase
             'counts' => ['wishes' => 1, 'votes' => 2, 'anonymous_voters' => 1, 'users' => 2],
         ], $status);
 
+        // the bot account does not count as a user
+        $this->pdo->exec("INSERT INTO users (id, username, role, first_seen_at, last_seen_at) VALUES (99, 'Bot', 1, 'x', 'x')");
+        $botApp = $this->app(['GAMEVAULT_USERNAME' => 'bot', 'GAMEVAULT_PASSWORD' => 'pw']);
+        $counts = self::body(self::send($botApp, 'GET', '/api/v1/admin/status', headers: $this->bearer('a1')))['counts'];
+        self::assertIsArray($counts);
+        self::assertSame(2, $counts['users']);
+
         $res = self::send($app, 'POST', '/api/v1/admin/sync', headers: $this->bearer('a1'));
         self::assertSame(202, $res->status);
         self::assertSame(['requested_at' => '2026-06-01T12:00:00Z'], self::body($res));

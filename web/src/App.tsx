@@ -3,6 +3,7 @@ import { endpoints, type Info, type Me } from "./api/client";
 import { AdminStatusPanel } from "./components/AdminStatusPanel";
 import { ClientHint } from "./components/ClientHint";
 import { Header, LanguageSwitcher, Logo } from "./components/Header";
+import { ScrollTop } from "./components/ScrollTop";
 import { SearchPanel } from "./components/SearchPanel";
 import { Toasts, type ToastItem } from "./components/Toasts";
 import { WishList } from "./components/WishList";
@@ -119,6 +120,7 @@ export function App({ info }: { info: Info | null }) {
         <WishList />
       </main>
       <Footer info={info} />
+      <ScrollTop />
       <Toasts items={toasts} onDismiss={dismiss} />
     </AppContext.Provider>
   );
