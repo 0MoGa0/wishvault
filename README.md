@@ -19,7 +19,7 @@ provider), wish for it and vote. Admins set a status, and wishes turn
 - Per-account notifications ("your wish is now available") for native clients, JSON API (`openapi.yaml`)
 - Full admin functions in the web UI: status, reason, note, delete, Steam tags, sync now, service status
 - Optional automatic cleanup of old wishes
-- Web UI with themes (`default`, `gamevault`) and translations (English, German), custom CSS without a fork
+- Web UI with themes (`default`, `cardboard`, `gamevault`) and translations (English, German), custom CSS without a fork
 - One container (`serversideup/php`, nginx + PHP-FPM), SQLite, no cron, no external database, daily backups (7 kept)
 
 ## Quick start
@@ -65,7 +65,7 @@ environment, never baked into the image.
 | `DEFAULT_LOCALE` | `en` | Web UI language when the browser language is not available (`en`, `de`) |
 | `SITE_NAME` | `WishVault` | Name in the header and page title |
 | `SITE_LOGO_URL` | – | Logo in the header instead of the built-in one |
-| `THEME` | `default` | Web UI theme: `default` or `gamevault` (see `web/src/themes/`) |
+| `THEME` | `default` | Web UI theme: `default`, `cardboard` or `gamevault` (see `web/src/themes/`) |
 | `CLIENT_DOWNLOAD_URL` | – | Shows a "get the desktop client" hint linking here (empty = hidden) |
 | `TZ` | `UTC` | Time zone of the container |
 

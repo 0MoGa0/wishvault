@@ -1,0 +1,54 @@
+/*
+ * Theme "cardboard" – warm kraft-paper surfaces with an amber accent
+ * (light + dark). Only token values, see default.css for the token list.
+ * All colours are derived from two values, base #b08458 and accent #c8762a
+ * (OKLab mixes with near-neutral greys), so a variant only needs those two
+ * recomputed. This file can be deleted without any other change.
+ */
+:root {
+  color-scheme: light;
+  --wv-bg: #e7ddd2;
+  --wv-bg-image: radial-gradient(60rem 28rem at 15% -8rem, rgb(200 118 42 / 0.1), transparent 70%),
+    radial-gradient(48rem 24rem at 100% 0, rgb(176 132 88 / 0.12), transparent 70%);
+  --wv-surface: #fdfcfc;
+  --wv-surface-2: #e6ddd3;
+  --wv-border: #d3c2b0;
+  --wv-text: #25211c;
+  --wv-text-muted: #5d5043;
+  --wv-accent: #a35f20;
+  --wv-accent-text: #ffffff;
+  --wv-success: #188f5c;
+  --wv-warning: #9a6a10;
+  --wv-danger: #c4323a;
+  --wv-focus: #c8762a;
+  --wv-backdrop: rgb(37 33 28 / 0.45);
+  --wv-radius: 0.875rem;
+  --wv-radius-sm: 0.5rem;
+  --wv-shadow: 0 1px 2px rgb(58 40 22 / 0.08), 0 8px 24px -6px rgb(58 40 22 / 0.18);
+  --wv-shadow-sm: 0 1px 2px rgb(58 40 22 / 0.08);
+  --wv-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --wv-font-heading: var(--wv-font);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --wv-bg: #161310;
+    --wv-bg-image: radial-gradient(60rem 28rem at 15% -8rem, rgb(200 118 42 / 0.12), transparent 70%),
+      radial-gradient(48rem 24rem at 100% 0, rgb(176 132 88 / 0.1), transparent 70%);
+    --wv-surface: #26211b;
+    --wv-surface-2: #302a23;
+    --wv-border: #3c342c;
+    --wv-text: #f4f0ec;
+    --wv-text-muted: #ac9c8c;
+    --wv-accent: #c8762a;
+    --wv-accent-text: #ffffff;
+    --wv-success: #56d692;
+    --wv-warning: #f1c56c;
+    --wv-danger: #ef7373;
+    --wv-focus: #d48f57;
+    --wv-backdrop: rgb(0 0 0 / 0.6);
+    --wv-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -8px rgb(0 0 0 / 0.6);
+    --wv-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+}
