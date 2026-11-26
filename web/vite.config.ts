@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -10,6 +11,7 @@ const mock = api.includes(":4010");
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: { outDir: "../public", emptyOutDir: false },
+  test: { environment: "jsdom", restoreMocks: true, setupFiles: ["src/test/setup.ts"] },
   server: {
     proxy: {
       "/api/v1": {
