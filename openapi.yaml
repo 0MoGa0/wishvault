@@ -43,6 +43,9 @@ info:
     GameVault roles: `0` guest, `1` user, `2` editor, `3` admin.
     An account needs at least `wish_min_role` (default 1) to use WishVault and
     `admin_min_role` (default 3) for admin functions (see `GET /info`).
+    An account below `wish_min_role` reads like an anonymous caller, gets
+    `can_wish: false` from `/me` and `403 role_too_low` on writes and `/events`.
+    Web sessions take over a changed GameVault role on the next login.
     Visibility per caller:
 
     | Field | anonymous | account | admin |
@@ -813,7 +816,7 @@ components:
           enum: [available, released, rejected]
         wish:
           type: object
-          description: Snapshot, still present if the wish was deleted later
+          description: Snapshot, still present if the wish disappeared because its last vote was withdrawn. Deleting a wish as admin also deletes its events.
           required: [id, title, image_url, gamevault_game_id]
           properties:
             id: { type: integer }
