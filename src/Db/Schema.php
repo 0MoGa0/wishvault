@@ -96,6 +96,7 @@ final class Schema
                 title_normalized        TEXT    NOT NULL,
                 steam_app_ids           TEXT    NOT NULL DEFAULT '[]', -- JSON array of ints
                 provider_ids            TEXT    NOT NULL DEFAULT '[]', -- JSON array of "slug:id"
+                gv_updated_at           TEXT,                         -- updated_at reported by GameVault
                 synced_at               TEXT    NOT NULL,
                 removed_at              TEXT                          -- not seen in the last complete sync
             );

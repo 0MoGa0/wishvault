@@ -22,6 +22,7 @@ final class Request
         public readonly array $cookies = [],
         public readonly string $body = '',
         public readonly string $remoteAddr = '127.0.0.1',
+        public readonly bool $https = false,
     ) {
     }
 
@@ -52,6 +53,7 @@ final class Request
             cookies: $cookies,
             body: (string) file_get_contents('php://input'),
             remoteAddr: is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0',
+            https: is_string($_SERVER['HTTPS'] ?? null) && $_SERVER['HTTPS'] !== '' && strtolower($_SERVER['HTTPS']) !== 'off',
         );
     }
 
@@ -69,6 +71,9 @@ final class Request
     {
         if (trim($this->body) === '') {
             return [];
+        }
+        if (strlen($this->body) > 65536) {
+            throw ApiError::validation(['body' => 'too_long']);
         }
         try {
             $data = json_decode($this->body, true, 32, JSON_THROW_ON_ERROR);
@@ -95,5 +100,24 @@ final class Request
     public function routeParam(string $name): string
     {
         return $this->routeParams[$name] ?? '';
+    }
+
+    public function routeId(string $name = 'id'): int
+    {
+        return (int) $this->routeParam($name);
+    }
+
+    public function bearerToken(): ?string
+    {
+        $auth = $this->header('authorization');
+        if ($auth === null || preg_match('/^Bearer\s+(\S{1,4096})\s*$/i', $auth, $m) !== 1) {
+            return null;
+        }
+        return $m[1];
+    }
+
+    public function isWrite(): bool
+    {
+        return !in_array($this->method, ['GET', 'HEAD', 'OPTIONS'], true);
     }
 }

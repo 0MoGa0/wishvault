@@ -29,7 +29,8 @@ final class Database
 
     /**
      * Prepared query helper (PDO is in exception mode; false never comes back,
-     * this only narrows the type).
+     * this only narrows the type). Integers are bound as integers so that
+     * comparisons with JSON values and LIMIT work as expected.
      *
      * @param array<string, scalar|null> $params
      */
@@ -39,7 +40,14 @@ final class Database
         if ($stmt === false) {
             throw new \RuntimeException('prepare failed');
         }
-        $stmt->execute($params);
+        foreach ($params as $name => $value) {
+            $stmt->bindValue(':' . $name, is_bool($value) ? (int) $value : $value, match (true) {
+                is_int($value), is_bool($value) => \PDO::PARAM_INT,
+                $value === null => \PDO::PARAM_NULL,
+                default => \PDO::PARAM_STR,
+            });
+        }
+        $stmt->execute();
         return $stmt;
     }
 }
