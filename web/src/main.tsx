@@ -1,18 +1,23 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./themes/default.css";
 import "./index.css";
+import { endpoints, type Info } from "./api/client";
 import { App } from "./App";
-import { loadLocale, locales } from "./i18n";
+import { detectLocale, loadLocale, locales, storedLocale } from "./i18n";
+import { applyCustomCss, applyTheme } from "./theme";
 
-const preferred = navigator.languages
-  .map((l) => l.slice(0, 2).toLowerCase())
-  .find((l) => locales.includes(l));
-
-loadLocale(preferred ?? "en").finally(() => {
+async function boot() {
+  const raw = await endpoints.info().catch(() => null);
+  const info: Info | null = raw?.service === "wishvault" ? raw : null;
+  // Theme first, so the page never shows unstyled tokens.
+  await applyTheme(info?.theme);
+  applyCustomCss(info?.custom_css === true);
+  await loadLocale(detectLocale(locales, storedLocale(), navigator.languages ?? [], info?.default_locale));
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
-      <App />
+      <App info={info} />
     </StrictMode>,
   );
-});
+}
+
+void boot();
