@@ -21,5 +21,17 @@ The new language appears in the language menu automatically.
 
 ## Themes
 
-A theme is a single CSS file in `web/src/themes/` that only sets the `--wv-*`
-tokens (see `default.css`). Components never use fixed colours or fonts.
+A theme is a single CSS file in `web/src/themes/<name>.css` that only sets the
+`--wv-*` tokens (see `default.css`). Components never use fixed colours, fonts
+or `style=` attributes; a test enforces this and checks that every theme sets
+all tokens:
+
+| Group | Tokens |
+| --- | --- |
+| Colours | `--wv-bg`, `--wv-bg-image`, `--wv-surface`, `--wv-surface-2`, `--wv-border`, `--wv-text`, `--wv-text-muted`, `--wv-accent`, `--wv-accent-text`, `--wv-success`, `--wv-warning`, `--wv-danger`, `--wv-focus`, `--wv-backdrop` |
+| Shape | `--wv-radius`, `--wv-radius-sm`, `--wv-shadow`, `--wv-shadow-sm` |
+| Type | `--wv-font`, `--wv-font-heading` |
+
+Every theme file is built as its own stylesheet; the service picks one with the
+`THEME` environment variable (fallback `default`). Operators can add
+`custom.css` to the data volume for small changes without a fork.
