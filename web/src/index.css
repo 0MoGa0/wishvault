@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
-/* Map the theme tokens into Tailwind (bg-surface, text-muted, rounded-wv …). */
+/*
+ * Theme tokens → Tailwind utilities (bg-surface, text-muted, rounded-wv,
+ * shadow-wv, font-heading …). Components only use these utilities; the values
+ * come from the active theme file in src/themes/ (loaded at runtime).
+ * Every --wv-* token used here must be set by every theme (checked by a test).
+ */
 @theme inline {
   --color-bg: var(--wv-bg);
   --color-surface: var(--wv-surface);
@@ -14,11 +19,58 @@
   --color-warning: var(--wv-warning);
   --color-danger: var(--wv-danger);
   --radius-wv: var(--wv-radius);
+  --radius-wv-sm: var(--wv-radius-sm);
+  --shadow-wv: var(--wv-shadow);
+  --shadow-wv-sm: var(--wv-shadow-sm);
   --font-wv: var(--wv-font);
+  --font-heading: var(--wv-font-heading);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--wv-bg);
+  min-height: 100vh;
+  background-color: var(--wv-bg);
+  background-image: var(--wv-bg-image);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--wv-text);
   font-family: var(--wv-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--wv-focus);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--wv-focus);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--wv-accent) 30%, transparent);
+}
+
+dialog::backdrop {
+  background: var(--wv-backdrop);
+  backdrop-filter: blur(2px);
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

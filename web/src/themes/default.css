@@ -1,33 +1,59 @@
 /*
- * Theme "default" – WishVault's own neutral look.
- * A theme file only sets token values. Components use the tokens only
- * (see src/index.css), never fixed colours or fonts.
+ * Theme "default" – WishVault's own neutral look (light + dark).
+ *
+ * A theme is one file that only sets the --wv-* tokens below. Components use
+ * the tokens only (see src/index.css), never fixed colours or fonts. To make
+ * a theme, copy this file to src/themes/<name>.css and set THEME=<name>.
+ *
+ * Tokens: colours (bg, surface, surface-2, border, text, text-muted, accent,
+ * accent-text, success, warning, danger, focus, backdrop), bg-image (any
+ * background-image value or none), radius, radius-sm, shadow, shadow-sm,
+ * font, font-heading.
  */
 :root {
-  --wv-bg: #f6f7f9;
+  color-scheme: light;
+  --wv-bg: #f3f4f6;
+  --wv-bg-image: radial-gradient(60rem 28rem at 15% -8rem, rgb(14 124 116 / 0.1), transparent 70%),
+    radial-gradient(48rem 24rem at 100% 0, rgb(217 119 6 / 0.06), transparent 70%);
   --wv-surface: #ffffff;
-  --wv-surface-2: #eef0f4;
-  --wv-border: #d9dde5;
-  --wv-text: #161a22;
-  --wv-text-muted: #5b6475;
-  --wv-accent: #6d4aff;
+  --wv-surface-2: #eef0f3;
+  --wv-border: #dde1e6;
+  --wv-text: #15191e;
+  --wv-text-muted: #5b6470;
+  --wv-accent: #0e7c74;
   --wv-accent-text: #ffffff;
-  --wv-success: #1f9d55;
-  --wv-warning: #c27c0e;
-  --wv-danger: #d64045;
-  --wv-radius: 0.75rem;
-  --wv-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --wv-success: #18794e;
+  --wv-warning: #a35c00;
+  --wv-danger: #c4323a;
+  --wv-focus: #0e7c74;
+  --wv-backdrop: rgb(15 20 25 / 0.45);
+  --wv-radius: 0.875rem;
+  --wv-radius-sm: 0.5rem;
+  --wv-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px -6px rgb(16 24 40 / 0.14);
+  --wv-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --wv-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --wv-font-heading: var(--wv-font);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --wv-bg: #0f1117;
-    --wv-surface: #171a23;
-    --wv-surface-2: #1f2330;
-    --wv-border: #2b3040;
-    --wv-text: #e8eaf0;
-    --wv-text-muted: #9aa3b5;
-    --wv-accent: #8b70ff;
-    --wv-accent-text: #ffffff;
+    color-scheme: dark;
+    --wv-bg: #0c0f12;
+    --wv-bg-image: radial-gradient(60rem 28rem at 15% -8rem, rgb(45 212 191 / 0.08), transparent 70%),
+      radial-gradient(48rem 24rem at 100% 0, rgb(251 191 36 / 0.04), transparent 70%);
+    --wv-surface: #14181d;
+    --wv-surface-2: #1b2026;
+    --wv-border: #272d35;
+    --wv-text: #e6eaee;
+    --wv-text-muted: #95a0ab;
+    --wv-accent: #2fc4ae;
+    --wv-accent-text: #04201c;
+    --wv-success: #4cc38a;
+    --wv-warning: #f0b14a;
+    --wv-danger: #f2727a;
+    --wv-focus: #5eead4;
+    --wv-backdrop: rgb(0 0 0 / 0.6);
+    --wv-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -8px rgb(0 0 0 / 0.6);
+    --wv-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
   }
 }
