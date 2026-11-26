@@ -76,7 +76,7 @@ export function WishList() {
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
       {/* Title, sort and tabs stay visible while scrolling through many wishes */}
-      <div className="sticky top-[var(--wv-header-h,3.75rem)] z-20 -mx-4 flex flex-col gap-3 bg-bg/90 px-4 pt-3 backdrop-blur">
+      <div className="wv-page-bg sticky top-[var(--wv-header-h,3.75rem)] z-20 -mx-4 flex flex-col gap-3 px-4 pt-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 id={`${id}-title`} className="font-heading text-2xl font-bold tracking-tight">
             {t("nav.wishlist")}
