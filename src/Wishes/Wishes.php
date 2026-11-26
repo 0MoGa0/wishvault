@@ -54,17 +54,23 @@ final readonly class Wishes
         if (in_array($filter, ['rejected', 'all'], true) && !$caller->seesDetails()) {
             throw ApiError::forbidden('forbidden', 'This filter needs an account');
         }
+        $params = [];
         $where = match ($filter) {
             'open' => "w.status IN ('new', 'queued', 'paused')",
             'available' => "w.status = 'available'",
             'rejected' => "w.status = 'rejected'",
+            'voted' => 'EXISTS (SELECT 1 FROM votes mv WHERE mv.wish_id = w.id AND (mv.user_id = :mine_u OR mv.voter_id = :mine_v))'
+                . ($caller->seesDetails() ? '' : " AND w.status <> 'rejected'"),
             default => '1 = 1',
         };
+        if ($filter === 'voted') {
+            $params = ['mine_u' => $caller->userId, 'mine_v' => $caller->userId === null ? $caller->voterId : null];
+        }
         $order = $sort === 'new'
             ? 'w.created_at DESC, w.id DESC'
             : 'vote_count DESC, last_vote_at DESC, w.id DESC';
-        $total = (int) Data::int(Database::run($this->pdo, "SELECT COUNT(*) FROM wishes w WHERE $where")->fetchColumn());
-        $rows = $this->select($caller, $where, [], "ORDER BY $order LIMIT :limit OFFSET :offset", [
+        $total = (int) Data::int(Database::run($this->pdo, "SELECT COUNT(*) FROM wishes w WHERE $where", $params)->fetchColumn());
+        $rows = $this->select($caller, $where, $params, "ORDER BY $order LIMIT :limit OFFSET :offset", [
             'limit' => $limit,
             'offset' => $offset,
         ]);
@@ -319,6 +325,18 @@ final readonly class Wishes
         );
     }
 
+    /**
+     * Public page of a provider game, when the provider has a stable id link.
+     * IGDB resolves /g/<id in base 36> to the game page.
+     */
+    public static function providerUrl(string $slug, string $dataId): ?string
+    {
+        if ($slug === 'igdb' && preg_match('/^[1-9][0-9]{0,17}$/', $dataId) === 1) {
+            return 'https://www.igdb.com/g/' . base_convert($dataId, 10, 36);
+        }
+        return null;
+    }
+
     /** Provider release dates come as ISO date-time; keep the date. */
     public static function providerDate(?string $value): ?string
     {
@@ -405,7 +423,7 @@ final readonly class Wishes
             'image_url' => $item['cover_url'],
             'release_date' => $date,
             'coming_soon' => $date !== null && preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $date) === 1 && $date > $today,
-            'store_url' => null,
+            'store_url' => self::providerUrl($slug, $dataId),
             'categories' => [],
             'steam_app_id' => null,
             'provider_slug' => $slug,

@@ -196,13 +196,15 @@ paths:
       summary: List wishes
       description: |
         `rejected` and `all` require an account (`403 forbidden` otherwise).
+        `voted` lists the wishes the caller has voted for (account or
+        anonymous token), with any status the caller may see.
         Anonymous callers see rejected wishes nowhere.
       parameters:
         - name: filter
           in: query
           schema:
             type: string
-            enum: [open, available, rejected, all]
+            enum: [open, available, rejected, all, voted]
             default: open
         - name: sort
           in: query
@@ -678,7 +680,7 @@ components:
         image_url: { type: [string, "null"] }
         release_date: { type: [string, "null"], description: "As given by the source, free text (e.g. `Q3 2027`) or ISO date" }
         coming_soon: { type: boolean }
-        store_url: { type: [string, "null"] }
+        store_url: { type: [string, "null"], description: "Steam store page, or the provider page (IGDB) when it has a stable link" }
         wish_id: { type: [integer, "null"], description: Existing wish for this game }
         voted: { type: boolean, description: The caller already voted for the existing wish }
         gamevault_game_id: { type: [integer, "null"], description: Game is already in GameVault }
@@ -736,7 +738,7 @@ components:
         image_url: { type: [string, "null"], description: "Header image (Steam) or cover (provider)" }
         release_date: { type: [string, "null"] }
         coming_soon: { type: boolean }
-        store_url: { type: [string, "null"] }
+        store_url: { type: [string, "null"], description: "Steam store page, or the provider page (IGDB) when it has a stable link" }
         categories:
           type: array
           description: "Steam categories, e.g. `Multi-player`, `Online Co-op`, `LAN PvP`"

@@ -232,6 +232,17 @@ final class WishesTest extends TestCase
         self::assertSame([3], $ids($page));
         self::assertSame(3, self::body($page)['total']);
 
+        // only the wishes the caller voted for
+        self::assertSame([2], $ids(self::send($app, 'GET', '/api/v1/wishes?filter=voted', headers: $this->bearer('u2'))));
+        self::assertSame([3, 2, 1], $ids(self::send($app, 'GET', '/api/v1/wishes?filter=voted&sort=new', headers: $this->bearer('u1'))));
+        self::assertSame(1, self::body(self::send($app, 'GET', '/api/v1/wishes?filter=voted', headers: $this->bearer('u2')))['total']);
+        self::assertSame([], $ids(self::send($app, 'GET', '/api/v1/wishes?filter=voted')));
+        $anon = self::cookieValue(self::send($app, 'PUT', '/api/v1/wishes/1/vote'), 'wv_anon');
+        $this->pdo->exec("INSERT INTO votes (wish_id, voter_id, created_at) SELECT 3, id, 'x' FROM voters");
+        $res = self::send($app, 'GET', '/api/v1/wishes?filter=voted', cookies: ['wv_anon' => $anon]);
+        self::assertSame([1], $ids($res));
+        self::assertSame(1, self::body($res)['total']);
+
         // anonymous callers never see rejected wishes
         foreach (['rejected', 'all'] as $filter) {
             $res = self::send($app, 'GET', '/api/v1/wishes?filter=' . $filter);
@@ -428,7 +439,7 @@ final class WishesTest extends TestCase
         self::assertSame('Obscure Game', $wish['title']);
         self::assertSame('2099-01-01', $wish['release_date']);
         self::assertTrue($wish['coming_soon']);
-        self::assertNull($wish['store_url']);
+        self::assertSame('https://www.igdb.com/g/39u', $wish['store_url']);
         self::assertSame('igdb', $this->column('SELECT provider_slug FROM wishes')[0] ?? null);
 
         // not cached and not found by id search

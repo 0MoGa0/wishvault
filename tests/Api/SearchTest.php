@@ -110,7 +110,7 @@ final class SearchTest extends TestCase
         self::assertIsArray($results);
         self::assertSame([
             'source' => 'provider', 'source_id' => '77', 'title' => 'Nothing Here', 'image_url' => null,
-            'release_date' => '2001-05-02', 'coming_soon' => false, 'store_url' => null,
+            'release_date' => '2001-05-02', 'coming_soon' => false, 'store_url' => 'https://www.igdb.com/g/25',
             'wish_id' => null, 'voted' => false, 'gamevault_game_id' => null,
         ], $results[0]);
 

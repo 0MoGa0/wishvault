@@ -123,7 +123,7 @@ final readonly class Search
                 'image_url' => $item['cover_url'],
                 'release_date' => $date,
                 'coming_soon' => $date !== null && preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $date) === 1 && $date > $today,
-                'store_url' => null,
+                'store_url' => Wishes::providerUrl($provider['slug'], $item['provider_data_id']),
             ];
             $results[] = $result + $this->wishes->markers($caller, [
                 'source' => 'provider',

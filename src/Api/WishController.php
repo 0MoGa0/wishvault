@@ -22,7 +22,7 @@ final readonly class WishController
     {
         $query = $ctx->request->query;
         $in = new Input();
-        $filter = $in->enum($query['filter'] ?? null, 'filter', ['open', 'available', 'rejected', 'all'], 'open');
+        $filter = $in->enum($query['filter'] ?? null, 'filter', ['open', 'available', 'rejected', 'all', 'voted'], 'open');
         $sort = $in->enum($query['sort'] ?? null, 'sort', ['votes', 'new'], 'votes');
         $limit = $in->int($query['limit'] ?? null, 'limit', 1, 200, 100);
         $offset = $in->int($query['offset'] ?? null, 'offset', 0, 1_000_000_000, 0);
