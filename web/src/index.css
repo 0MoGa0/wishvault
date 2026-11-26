@@ -26,6 +26,15 @@
   --font-heading: var(--wv-font-heading);
 }
 
+/* Same background as the page (colour + fixed theme image), for sticky bars
+   that must not stand out from what scrolls below them. */
+.wv-page-bg {
+  background-color: var(--wv-bg);
+  background-image: var(--wv-bg-image);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
